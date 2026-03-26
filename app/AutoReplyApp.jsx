@@ -229,16 +229,16 @@ function CopyBtn({ getText }) {
   );
 }
 
-function SendEmailBtn({ text }) {
+function SendEmailBtn({ text, defaultEmail }) {
+  const [email, setEmail] = useState(defaultEmail || "");
   const [status, setStatus] = useState(null); // null | "sending" | "ok" | "err"
   const [msg, setMsg] = useState("");
   const { subj, body } = parseEmail(text || "");
   const handleSend = async () => {
-    const to = window.prompt("Recipient email address:");
-    if (!to || !to.trim()) return;
+    if (!email.trim()) return;
     setStatus("sending"); setMsg("");
     try {
-      await sendEmailApi(to.trim(), subj || "Follow-up from LAG Auto", body);
+      await sendEmailApi(email.trim(), subj || "Follow-up from LAG Auto", body);
       setStatus("ok"); setMsg("Sent!");
     } catch(e) {
       setStatus("err"); setMsg(e.message);
@@ -247,15 +247,22 @@ function SendEmailBtn({ text }) {
   };
   return (
     <div className="snd-row">
+      <input
+        className="inp"
+        style={{width:200,fontSize:11.5,padding:"5px 10px"}}
+        value={email}
+        onChange={e=>setEmail(e.target.value)}
+        placeholder="customer@email.com"
+        disabled={status==="sending"}
+      />
       <button
         className={"bsend"+(status==="ok"?" ok":status==="err"?" err":"")}
         onClick={handleSend}
-        disabled={status==="sending"}
+        disabled={status==="sending"||!email.trim()}
       >
         {status==="sending"?"Sending…":status==="ok"?"✓ Sent!":status==="err"?"✕ Failed":"📧 Send Email"}
       </button>
       {msg && <span style={{fontSize:11,color:status==="ok"?"#16a34a":"#dc2626",fontWeight:500}}>{msg}</span>}
-      {!status && <span className="snd-disc">Test mode — limited to verified recipients</span>}
     </div>
   );
 }
@@ -293,17 +300,18 @@ function SendSmsBtn({ message, defaultPhone }) {
         {status==="sending"?"Sending…":status==="ok"?"✓ Sent!":status==="err"?"✕ Failed":"📱 Send SMS"}
       </button>
       {msg && <span style={{fontSize:11,color:status==="ok"?"#16a34a":"#dc2626",fontWeight:500}}>{msg}</span>}
-      {!status && <span className="snd-disc">Test mode — verified numbers only</span>}
     </div>
   );
 }
 
 function EmailCard({ text, title, color }) {
   const [prev, setPrev] = useState(false);
+  const [copiedSubj, setCopiedSubj] = useState(false);
   if (!text) return null;
   const isErr = text.startsWith("Error:");
   const { subj, body } = parseEmail(text);
   const full = (subj?"Subject: "+subj+"\n\n":"")+body;
+  const copySubj = () => { copyText(subj); setCopiedSubj(true); setTimeout(()=>setCopiedSubj(false),2000); };
   return (
     <div className="anim" style={{marginBottom:16}}>
       <div className="ehdr">
@@ -315,6 +323,7 @@ function EmailCard({ text, title, color }) {
               <span style={{fontSize:11,fontWeight:600,color:prev?CYAN:"#a8a29e"}}>{prev?"Inbox View":"Raw Text"}</span>
             </div>
             <CopyBtn getText={()=>full}/>
+            {subj && <button className={"bsm"+(copiedSubj?" ok":"")} onClick={copySubj}>{copiedSubj?"✓ Copied!":"Copy Subject"}</button>}
           </div>
         )}
       </div>
@@ -350,6 +359,7 @@ export default function App() {
   const [lookupBusy,setLookupBusy]= useState(false);
   const [custName,  setCustName]  = useState("");
   const [custPhone, setCustPhone] = useState("");
+  const [custEmail, setCustEmail] = useState("");
   const [salesName, setSalesName] = useState("");
   const [leadMsg,   setLeadMsg]   = useState("");
   const [notes,     setNotes]     = useState({q1:"",q2:"",q3:"",q4:"",q5:""});
@@ -554,6 +564,7 @@ export default function App() {
             <div className="g2">
               <div><label>Customer Name *</label><input className="inp" value={custName} onChange={e=>setCustName(e.target.value)} placeholder="e.g. Sarah Johnson"/></div>
               <div><label>Customer Phone</label><input className="inp" value={custPhone} onChange={e=>setCustPhone(e.target.value)} placeholder="e.g. 780-555-1234"/></div>
+              <div><label>Customer Email</label><input className="inp" value={custEmail} onChange={e=>setCustEmail(e.target.value)} placeholder="e.g. sarah@email.com" type="email"/></div>
               <div><label>Salesperson Name</label><input className="inp" value={salesName} onChange={e=>setSalesName(e.target.value)} placeholder="e.g. Casey Pilip"/></div>
               <div className="s2"><label>Customer's Lead Message *</label><textarea rows={3} className="inp" value={leadMsg} onChange={e=>setLeadMsg(e.target.value)} placeholder="Paste the customer's message here…" style={{resize:"vertical"}}/></div>
             </div>
@@ -607,7 +618,7 @@ export default function App() {
               ? <Spinner label="Writing your personalized email…"/>
               : <>
                   <EmailCard text={emailOut} title={"📧 INITIAL REPLY · "+[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")+(vehicle?.stock?" · Stock #"+vehicle.stock:"")} color={CYAN}/>
-                  {emailDone && <SendEmailBtn text={emailOut}/>}
+                  {emailDone && <SendEmailBtn text={emailOut} defaultEmail={custEmail}/>}
                 </>
             }
           </div>
@@ -645,7 +656,7 @@ export default function App() {
                   <div className="smschar" style={{color:smsOut.length>160?RED:"#a8a29e"}}>
                     {smsOut.length} / 160 chars {smsOut.length>160?"⚠️ over limit — regenerate":"✓ good length"}
                   </div>
-                  <SendSmsBtn message={smsOut} defaultPhone=""/>
+                  <SendSmsBtn message={smsOut} defaultPhone={custPhone}/>
                 </div>
               )
             )}
@@ -660,9 +671,9 @@ export default function App() {
 
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
               {[
-                {n:"1",label:"Touch 1 — Same-day thank you",type:"Email",color:GREEN,desc:"Sent the same day as the initial enquiry"},
-                {n:"2",label:"Touch 2 — 48-hour check-in",type:"SMS",color:PURPLE,desc:"Short text if no reply after 2 days"},
-                {n:"3",label:"Touch 3 — 7-day value-add",type:"Email",color:GOLD,desc:"Warm re-engagement with relevant info or offer"},
+                {n:"1",label:"📧 Same-Day Thank You (Email)",type:"Email",color:GREEN,desc:"Sent the same day as the initial enquiry"},
+                {n:"2",label:"📱 48-Hour Check-In (SMS)",type:"SMS",color:PURPLE,desc:"Short text if no reply after 2 days"},
+                {n:"3",label:"📧 7-Day Re-Engagement (Email)",type:"Email",color:GOLD,desc:"Warm re-engagement with relevant info or offer"},
               ].map(t=>(
                 <div key={t.n} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",borderRadius:10,border:"1.5px solid #e7e3dc",background:"#faf9f7"}}>
                   <div style={{width:28,height:28,borderRadius:50,background:t.color,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:12,flexShrink:0}}>{t.n}</div>
@@ -693,17 +704,17 @@ export default function App() {
                 <div style={{marginBottom:20}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
                     <div style={{width:24,height:24,borderRadius:50,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>1</div>
-                    <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:GREEN}}>TOUCH 1 — SAME-DAY THANK YOU · EMAIL</span>
+                    <span style={{fontSize:12,fontWeight:700,color:GREEN}}>📧 Same-Day Thank You (Email)</span>
                   </div>
                   <EmailCard text={seqOut.touch1} title="" color={GREEN}/>
-                  {!seqOut.touch1.startsWith("Error:") && <SendEmailBtn text={seqOut.touch1}/>}
+                  {!seqOut.touch1.startsWith("Error:") && <SendEmailBtn text={seqOut.touch1} defaultEmail={custEmail}/>}
                 </div>
 
                 {/* Touch 2 — SMS */}
                 <div style={{marginBottom:20}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
                     <div style={{width:24,height:24,borderRadius:50,background:PURPLE,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>2</div>
-                    <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:PURPLE}}>TOUCH 2 — 48-HOUR CHECK-IN · SMS</span>
+                    <span style={{fontSize:12,fontWeight:700,color:PURPLE}}>📱 48-Hour Check-In (SMS)</span>
                   </div>
                   {seqOut.touch2.startsWith("Error:") ? (
                     <div className="eerr"><strong>Error:</strong> {seqOut.touch2.replace("Error:","").trim()}</div>
@@ -721,7 +732,7 @@ export default function App() {
                       <div className="smschar" style={{color:seqOut.touch2.length>160?RED:"#a8a29e"}}>
                         {seqOut.touch2.length} / 160 chars {seqOut.touch2.length>160?"⚠️ over limit":"✓ good length"}
                       </div>
-                      <SendSmsBtn message={seqOut.touch2} defaultPhone=""/>
+                      <SendSmsBtn message={seqOut.touch2} defaultPhone={custPhone}/>
                     </div>
                   )}
                 </div>
@@ -730,10 +741,10 @@ export default function App() {
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
                     <div style={{width:24,height:24,borderRadius:50,background:GOLD,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>3</div>
-                    <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:GOLD}}>TOUCH 3 — 7-DAY VALUE-ADD · EMAIL</span>
+                    <span style={{fontSize:12,fontWeight:700,color:GOLD}}>📧 7-Day Re-Engagement (Email)</span>
                   </div>
                   <EmailCard text={seqOut.touch3} title="" color={GOLD}/>
-                  {!seqOut.touch3.startsWith("Error:") && <SendEmailBtn text={seqOut.touch3}/>}
+                  {!seqOut.touch3.startsWith("Error:") && <SendEmailBtn text={seqOut.touch3} defaultEmail={custEmail}/>}
                 </div>
               </div>
             )}
