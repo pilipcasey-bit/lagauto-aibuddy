@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "LAG Auto <onboarding@resend.dev>",
+        from: "LAG Auto <lagauto@murdawkmedia.com>",
         to: body.to,
         subject: body.subject,
         html: body.html,
