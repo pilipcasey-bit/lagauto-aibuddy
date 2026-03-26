@@ -439,9 +439,9 @@ export default function App() {
         // Touch 1: Same-day thank-you email
         callClaude(null,
           "Write a same-day thank-you email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" today.\nTone: warm, genuine, brief (4-5 sentences). No pressure. They just reached out.\nRules: No markdown, no bullets. Max 2 emoji. No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Use contractions naturally (you're, I'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+",\nEnd with:\n"+sig, 500),
-        // Touch 2: 48-hour SMS (hard max 160 chars)
+        // Touch 2: 48-hour SMS (hard max 140 chars)
         callClaude(null,
-          "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+firstName+" about the "+vName+".\nContext: 48 hours have passed since they enquired. No reply yet. Just checking in.\nRules:\n- HARD LIMIT: 160 characters maximum. This is a strict technical limit — messages over 160 characters WILL FAIL TO SEND. Aim for 120-150 characters.\n- Count every character including spaces and punctuation\n- Casual, friendly tone\n- End with a simple CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else — no labels, no quotes, no explanation", 100),
+          "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+firstName+" about the "+vName+".\nContext: 48 hours have passed since they enquired. No reply yet. Just checking in.\nRules:\n- ABSOLUTE MAXIMUM: 140 characters. You have 140 characters TOTAL including spaces. Count carefully. If in doubt, make it shorter.\n- Count every character including spaces and punctuation\n- Casual, friendly tone\n- End with a simple CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else — no labels, no quotes, no explanation", 100),
         // Touch 3: 7-day value-add email
         callClaude(null,
           "Write a 7-day follow-up email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" 7 days ago.\nTone: warm re-engagement, add genuine value - mention one relevant feature, current financing offer, or seasonal tip for Alberta drivers.\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji. Gentle urgency (not pushy). No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Mix short punchy sentences with longer ones. Use contractions naturally (you're, we'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+","+linkBlock7+"\nEnd with:\n"+sig, 600),
@@ -458,7 +458,7 @@ export default function App() {
     setSmsOut("loading");
     try {
       const text = await callClaude(null,
-        "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+custName.split(" ")[0]+(custPhone?" ("+custPhone+")":"")+" about the "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+" from lagauto.ca.\nRules:\n- HARD LIMIT: 160 characters maximum. This is a strict technical limit — messages over 160 characters WILL FAIL TO SEND. Aim for 120-150 characters.\n- Count every character including spaces and punctuation\n- Casual, friendly, direct\n- End with a clear CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else — no labels, no quotes, no explanation", 100);
+        "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+custName.split(" ")[0]+(custPhone?" ("+custPhone+")":"")+" about the "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+" from lagauto.ca.\nRules:\n- ABSOLUTE MAXIMUM: 140 characters. You have 140 characters TOTAL including spaces. Count carefully. If in doubt, make it shorter.\n- Count every character including spaces and punctuation\n- Casual, friendly, direct\n- End with a clear CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else — no labels, no quotes, no explanation", 100);
       setSmsOut(text);
     } catch(e) { setSmsOut("Error: "+e.message); }
   }, [vehicle, custName, salesName, custPhone]);
@@ -628,7 +628,7 @@ export default function App() {
         {vehicle && (
           <div className="card" style={{borderTop:"3px solid "+PURPLE}}>
             <div className="badge" style={{background:PURPLE}}><div className="bn" style={{background:"rgba(255,255,255,0.25)"}}>📱</div>SMS GENERATOR</div>
-            <p className="hint">Generate a short text message (max 160 chars) for the same vehicle/customer scenario. Perfect for buyers who prefer texting.</p>
+            <p className="hint">Generate a short text message (max 140 chars) for the same vehicle/customer scenario. Perfect for buyers who prefer texting.</p>
             {(!custName) && <div style={{fontSize:11.5,color:"#a8a29e",marginBottom:14}}>⚠ Fill in customer name in Step 3 to enable SMS generation.</div>}
             <button
               className="bfu bpu"
@@ -636,7 +636,7 @@ export default function App() {
               onClick={doSMS}
               disabled={smsOut==="loading"||!custName||!vehicle}
             >
-              {smsOut==="loading"?"✨ Writing SMS…":"📱 Generate SMS (160 chars)"}
+              {smsOut==="loading"?"✨ Writing SMS…":"📱 Generate SMS (140 chars)"}
             </button>
             {smsOut==="loading" && <div style={{color:"#a8a29e",fontSize:13,display:"flex",alignItems:"center",gap:8}}><div className="spin" style={{width:14,height:14,margin:0}}/> Writing…</div>}
             {smsOut && smsOut!=="loading" && (
@@ -653,8 +653,8 @@ export default function App() {
                       <div style={{fontSize:13.5,color:"#fff",lineHeight:1.7}}>{smsOut}</div>
                     </div>
                   </div>
-                  <div className="smschar" style={{color:smsOut.length>160?RED:"#a8a29e"}}>
-                    {smsOut.length} / 160 chars {smsOut.length>160?"⚠️ over limit — regenerate":"✓ good length"}
+                  <div className="smschar" style={{color:smsOut.length>140?RED:"#a8a29e"}}>
+                    {smsOut.length} / 140 chars {smsOut.length>140?"⚠️ over limit — regenerate":"✓ good length"}
                   </div>
                   <SendSmsBtn message={smsOut} defaultPhone={custPhone}/>
                 </div>
@@ -729,8 +729,8 @@ export default function App() {
                           <div style={{fontSize:13.5,color:"#fff",lineHeight:1.7}}>{seqOut.touch2}</div>
                         </div>
                       </div>
-                      <div className="smschar" style={{color:seqOut.touch2.length>160?RED:"#a8a29e"}}>
-                        {seqOut.touch2.length} / 160 chars {seqOut.touch2.length>160?"⚠️ over limit":"✓ good length"}
+                      <div className="smschar" style={{color:seqOut.touch2.length>140?RED:"#a8a29e"}}>
+                        {seqOut.touch2.length} / 140 chars {seqOut.touch2.length>140?"⚠️ over limit":"✓ good length"}
                       </div>
                       <SendSmsBtn message={seqOut.touch2} defaultPhone={custPhone}/>
                     </div>

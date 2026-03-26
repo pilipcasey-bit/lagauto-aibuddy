@@ -50,10 +50,10 @@ export async function POST(req: NextRequest) {
 
   const to = toE164(body.to);
 
-  // Hard truncation safety net: Twilio trial rejects >160 chars (error 30044)
+  // Hard truncation safety net: Twilio trial prepends ~38 chars, so cap at 140
   let smsBody = body.message;
-  if (smsBody.length > 160) {
-    smsBody = smsBody.slice(0, 157) + "...";
+  if (smsBody.length > 140) {
+    smsBody = smsBody.slice(0, 137) + "...";
   }
 
   try {
