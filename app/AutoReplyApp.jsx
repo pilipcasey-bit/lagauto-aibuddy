@@ -50,7 +50,7 @@ const TRIMS = ["calligraphy","ultimate","luxury","preferred","essential","limite
 const SLUGS = {"Santa Fe Hybrid":"santa-fe","Santa Fe":"santa-fe","Tucson Hybrid":"tucson","Tucson":"tucson","Elantra Hybrid":"elantra","Elantra":"elantra","Palisade":"palisade","Venue":"venue","Kona":"kona","Ioniq 5":"ioniq5","Ioniq 6":"ioniq6","Sorento Hybrid":"sorento","Sorento":"sorento","Sportage Hybrid":"sportage","Sportage":"sportage","Telluride":"telluride","Carnival":"carnival","Forte":"forte","K5":"k5","Niro":"niro","CR-V Hybrid":"cr-v","CR-V":"cr-v","Civic Hybrid":"civic","Civic":"civic","Accord Hybrid":"accord","Accord":"accord","Pilot":"pilot","Odyssey":"odyssey","HR-V":"hr-v","Ridgeline":"ridgeline","Rogue":"rogue","Pathfinder":"pathfinder","Qashqai":"qashqai","Murano":"murano","Frontier":"frontier","Kicks":"kicks","Outlander PHEV":"outlander-phev","Outlander":"outlander","Eclipse Cross":"eclipse-cross","RVR":"rvr","F-150":"trucks/f150","Escape":"suvs/escape","Explorer":"suvs/explorer","Bronco":"suvs/bronco","Bronco Sport":"suvs/bronco-sport","Ranger":"trucks/ranger","Expedition":"suvs/expedition","Edge":"suvs/edge","Mustang Mach-E":"electric-vehicles/mustang-mach-e","Compass":"compass","Wrangler":"wrangler","Grand Cherokee":"grand-cherokee","Gladiator":"gladiator","Pacifica":"pacifica","Durango":"durango","1500":"1500"};
 
 function getOEMUrl(make,model){const o=OEM[make];if(!o)return"https://www.lagauto.ca";const slug=SLUGS[model]||(model||"").toLowerCase().replace(/ /g,"-");if(make==="Nissan")return o.base;if(make==="Mitsubishi")return o.base+"/vehicles/"+slug;if(make==="Ford")return"https://www.ford.ca/"+slug+"/";if(["Jeep","Chrysler","Dodge","Ram"].includes(make))return o.base+"/vehicles/"+slug+".html";return o.base+"/"+slug;}
-function getVideos(make,model,year){const base=[year,make,model].filter(Boolean).join(" ");const isH=/hybrid|phev|ev|ioniq|mach-e|niro/i.test(model||"");const ytQ=encodeURIComponent(base+(isH?" hybrid review walkaround":" review walkaround"));const atQ=encodeURIComponent(base+" review");return[{title:base+" — Canadian Review",channel:"AutoTrader.ca",url:"https://www.autotrader.ca/editorial/?q="+atQ,reason:"Canada's #1 auto site"},{title:base+(isH?" Hybrid Walkaround":" Full Walkaround"),channel:"YouTube",url:"https://www.youtube.com/results?search_query="+ytQ+"&sp=CAMSAhAB",reason:"Most-watched review"}];}
+function getVideos(make,model,year){const base=[year,make,model].filter(Boolean).join(" ");const isH=/hybrid|phev|ev|ioniq|mach-e|niro/i.test(model||"");const ytQ=encodeURIComponent(base+(isH?" hybrid review walkaround":" review walkaround"));const atMake=encodeURIComponent(make||"");const atModel=encodeURIComponent(model||"");const atYear=year||"2026";const atUrl="https://www.autotrader.ca/cars/?mdl="+atModel+"&mk="+atMake+"&yRng="+atYear+"%2C"+atYear;return[{title:base+" — AutoTrader.ca Listings",channel:"AutoTrader.ca",url:atUrl,reason:"Canada's #1 auto site"},{title:base+(isH?" Hybrid Walkaround":" Full Walkaround"),channel:"YouTube",url:"https://www.youtube.com/results?search_query="+ytQ+"&sp=CAMSAhAB",reason:"Most-watched review"}];}
 function parseVehicle(input){const s=input.toLowerCase().replace(/-/g," ");const yearM=s.match(/20(1[6-9]|2[0-9])/);const year=yearM?yearM[0]:null;const makeKey=Object.keys(MAKE_MODELS).find(m=>s.includes(m))||null;const make=makeKey?makeKey.charAt(0).toUpperCase()+makeKey.slice(1):null;let model=null;if(makeKey){const f=MAKE_MODELS[makeKey].find(m=>s.includes(m));if(f)model=f.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}const trim=TRIMS.find(t=>s.includes(t));const trimProper=trim?trim.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" "):null;const vinM=input.match(/[A-HJ-NPR-Z0-9]{17}/i);const vin=vinM?vinM[0].toUpperCase():null;return{year,make,model,trim:trimProper,vin,stock:vin?vin.slice(-6):null};}
 function parseEmail(raw){if(!raw)return{subj:"",body:""};const lines=raw.split("\n");const si=lines.findIndex(l=>l.startsWith("SUBJECT:"));const subj=si>=0?lines[si].replace("SUBJECT:","").trim():"";const bi=lines.findIndex(l=>/^Hi /i.test(l.trim()));const body=lines.slice(bi>=0?bi:(si>=0?si+2:0)).join("\n").trim();return{subj,body};}
 function lagSig(n){return[n||"[Your Name]","LAG Auto — Landsperg Automotive Group","Hyundai · Kia · Honda · Nissan · Mitsubishi · Ford · Jeep · Ram","📍 6444 67 Street, Red Deer, AB T4P 1A1","📞 1-403-348-8000  |  🌐 lagauto.ca"].join("\n");}
@@ -261,7 +261,7 @@ function SendEmailBtn({ text }) {
 }
 
 function SendSmsBtn({ message, defaultPhone }) {
-  const [phone, setPhone] = useState(defaultPhone || "7807002271");
+  const [phone, setPhone] = useState(defaultPhone || "");
   const [status, setStatus] = useState(null); // null | "sending" | "ok" | "err"
   const [msg, setMsg] = useState("");
   const handleSend = async () => {
@@ -282,7 +282,7 @@ function SendSmsBtn({ message, defaultPhone }) {
         style={{width:140,fontSize:11.5,padding:"5px 10px"}}
         value={phone}
         onChange={e=>setPhone(e.target.value)}
-        placeholder="+17807002271"
+        placeholder="e.g. 780-555-1234"
         disabled={status==="sending"}
       />
       <button
@@ -431,7 +431,7 @@ export default function App() {
           "Write a same-day thank-you email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" today.\nTone: warm, genuine, brief (4-5 sentences). No pressure. They just reached out.\nRules: No markdown, no bullets. Max 2 emoji. No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Use contractions naturally (you're, I'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+",\nEnd with:\n"+sig, 500),
         // Touch 2: 48-hour SMS (hard max 160 chars)
         callClaude(null,
-          "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+firstName+" about the "+vName+".\nContext: 48 hours have passed since they enquired. No reply yet. Just checking in.\nRules:\n- MAXIMUM 160 characters total (count carefully)\n- Casual, friendly tone\n- End with a simple CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else", 100),
+          "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+firstName+" about the "+vName+".\nContext: 48 hours have passed since they enquired. No reply yet. Just checking in.\nRules:\n- HARD LIMIT: 160 characters maximum. This is a strict technical limit — messages over 160 characters WILL FAIL TO SEND. Aim for 120-150 characters.\n- Count every character including spaces and punctuation\n- Casual, friendly tone\n- End with a simple CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else — no labels, no quotes, no explanation", 100),
         // Touch 3: 7-day value-add email
         callClaude(null,
           "Write a 7-day follow-up email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" 7 days ago.\nTone: warm re-engagement, add genuine value - mention one relevant feature, current financing offer, or seasonal tip for Alberta drivers.\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji. Gentle urgency (not pushy). No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Mix short punchy sentences with longer ones. Use contractions naturally (you're, we'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+","+linkBlock7+"\nEnd with:\n"+sig, 600),
@@ -448,7 +448,7 @@ export default function App() {
     setSmsOut("loading");
     try {
       const text = await callClaude(null,
-        "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+custName.split(" ")[0]+(custPhone?" ("+custPhone+")":"")+" about the "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+" from lagauto.ca.\nRules:\n- MAXIMUM 160 characters total (count carefully)\n- Casual, friendly, direct\n- End with a clear CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else", 100);
+        "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+custName.split(" ")[0]+(custPhone?" ("+custPhone+")":"")+" about the "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+" from lagauto.ca.\nRules:\n- HARD LIMIT: 160 characters maximum. This is a strict technical limit — messages over 160 characters WILL FAIL TO SEND. Aim for 120-150 characters.\n- Count every character including spaces and punctuation\n- Casual, friendly, direct\n- End with a clear CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else — no labels, no quotes, no explanation", 100);
       setSmsOut(text);
     } catch(e) { setSmsOut("Error: "+e.message); }
   }, [vehicle, custName, salesName, custPhone]);
@@ -645,7 +645,7 @@ export default function App() {
                   <div className="smschar" style={{color:smsOut.length>160?RED:"#a8a29e"}}>
                     {smsOut.length} / 160 chars {smsOut.length>160?"⚠️ over limit — regenerate":"✓ good length"}
                   </div>
-                  <SendSmsBtn message={smsOut} defaultPhone="7807002271"/>
+                  <SendSmsBtn message={smsOut} defaultPhone=""/>
                 </div>
               )
             )}
@@ -721,7 +721,7 @@ export default function App() {
                       <div className="smschar" style={{color:seqOut.touch2.length>160?RED:"#a8a29e"}}>
                         {seqOut.touch2.length} / 160 chars {seqOut.touch2.length>160?"⚠️ over limit":"✓ good length"}
                       </div>
-                      <SendSmsBtn message={seqOut.touch2} defaultPhone="7807002271"/>
+                      <SendSmsBtn message={seqOut.touch2} defaultPhone=""/>
                     </div>
                   )}
                 </div>

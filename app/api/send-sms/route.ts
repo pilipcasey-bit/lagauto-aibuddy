@@ -50,11 +50,17 @@ export async function POST(req: NextRequest) {
 
   const to = toE164(body.to);
 
+  // Hard truncation safety net: Twilio trial rejects >160 chars (error 30044)
+  let smsBody = body.message;
+  if (smsBody.length > 160) {
+    smsBody = smsBody.slice(0, 157) + "...";
+  }
+
   try {
     const params = new URLSearchParams({
       To: to,
       From: fromNumber,
-      Body: body.message,
+      Body: smsBody,
     });
 
     const credentials = btoa(`${accountSid}:${authToken}`);
