@@ -56,9 +56,9 @@ function parseEmail(raw){if(!raw)return{subj:"",body:""};const lines=raw.split("
 function lagSig(n){return[n||"[Your Name]","LAG Auto — Landsperg Automotive Group","Hyundai · Kia · Honda · Nissan · Mitsubishi · Ford · Jeep · Ram","📍 6444 67 Street, Red Deer, AB T4P 1A1","📞 1-403-348-8000  |  🌐 lagauto.ca"].join("\n");}
 function copyText(t){navigator.clipboard?.writeText(t).catch(()=>{});}
 
-const NAVY="#002C5F",CYAN="#00AAD2",GOLD="#C8960C",GREEN="#16a34a",RED="#dc2626";
+const NAVY="#002C5F",CYAN="#00AAD2",GOLD="#C8960C",GREEN="#16a34a",RED="#dc2626",PURPLE="#7c3aed";
 const TONES=["Warm & Friendly","Professional & Direct","Enthusiastic & Energetic"];
-const SAMPLES=["2026 Hyundai Santa Fe Hybrid Calligraphy","2025 Kia Telluride SX","2026 Jeep Compass Sport 4x4","2024 Ram 1500 Lariat"];
+const SAMPLES=["2026 Ram 1500 Sport","2026 Hyundai Santa Fe Hybrid Calligraphy","2025 Kia Telluride SX","2026 Jeep Compass Sport 4x4"];
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -257,13 +257,15 @@ export default function App() {
   const [useVids,   setUseVids]   = useState(true);
   const [selVids,   setSelVids]   = useState([0,1]);
   const [emailOut,  setEmailOut]  = useState(null);
-  const [fu48Out,   setFu48Out]   = useState(null);
-  const [fu7Out,    setFu7Out]    = useState(null);
+  // Stage 3: 7-day follow-up sequence (3 touches)
+  const [seqOut,    setSeqOut]    = useState(null); // {touch1, touch2, touch3}
+  const [seqBusy,   setSeqBusy]  = useState(false);
+  // Stage 3: Standalone SMS generator
   const [smsOut,    setSmsOut]    = useState(null);
 
   const doLookup = useCallback(async (override) => {
     const input = (override !== undefined ? override : urlInput).trim();
-    setLookupErr(""); setVehicle(null); setEmailOut(null); setFu48Out(null); setFu7Out(null); setSmsOut(null);
+    setLookupErr(""); setVehicle(null); setEmailOut(null); setSeqOut(null); setSmsOut(null);
     if (!input) { setLookupErr("Please enter a vehicle name or URL."); return; }
     setLookupBusy(true);
     let p = parseVehicle(input);
@@ -302,24 +304,39 @@ export default function App() {
 
   const doGenerate = useCallback(async () => {
     if (!vehicle || !custName || !leadMsg) return;
-    setEmailOut("loading"); setFu48Out(null); setFu7Out(null); setSmsOut(null);
+    setEmailOut("loading"); setSeqOut(null); setSmsOut(null);
     try {
       const text = await callClaude(buildSystem(), "Customer: "+custName+"\nSalesperson: "+(salesName||"[Your Name]")+"\nLead message: "+leadMsg, 1000);
       setEmailOut(text);
     } catch(e) { setEmailOut("Error: "+e.message); }
   }, [vehicle, custName, salesName, leadMsg, buildSystem]);
 
-  const doFollowUp = useCallback(async (type) => {
-    if (!vehicle) return;
-    const set = type==="48hr" ? setFu48Out : setFu7Out;
-    set("loading");
-    const delay = type==="48hr"?"48 hours":"7 days";
-    const style = type==="48hr"?"very brief casual check-in, 3-4 sentences":"warm re-engagement, gentle urgency";
+  // Stage 3: Generate the full 3-touch follow-up sequence
+  const doFollowUpSequence = useCallback(async () => {
+    if (!vehicle || !custName) return;
+    setSeqBusy(true);
+    setSeqOut(null);
+    const vName = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
+    const firstName = custName.split(" ")[0];
+    const sig = lagSig(salesName);
     try {
-      const text = await callClaude(null,
-        "Write a "+style+" follow-up email.\nFrom: "+(salesName||"[Your Name]")+" at LAG Auto\nTo: "+custName+" re: "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+"\nNo reply in "+delay+".\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji.\nLine 1: SUBJECT: [subject]\nThen: Hi "+custName.split(" ")[0]+",\nEnd with:\n"+lagSig(salesName), 700);
-      set(text);
-    } catch(e) { set("Error: "+e.message); }
+      // Run all 3 touches in parallel for speed
+      const [t1, t2, t3] = await Promise.all([
+        // Touch 1: Same-day thank-you email
+        callClaude(null,
+          "Write a same-day thank-you email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" today.\nTone: warm, genuine, brief (4-5 sentences). No pressure. They just reached out.\nRules: No markdown, no bullets. Max 2 emoji.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+",\nEnd with:\n"+sig, 500),
+        // Touch 2: 48-hour SMS (hard max 160 chars)
+        callClaude(null,
+          "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+firstName+" about the "+vName+".\nContext: 48 hours have passed since they enquired. No reply yet. Just checking in.\nRules:\n- MAXIMUM 160 characters total (count carefully)\n- Casual, friendly tone\n- End with a simple CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else", 100),
+        // Touch 3: 7-day value-add email
+        callClaude(null,
+          "Write a 7-day follow-up email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" 7 days ago.\nTone: warm re-engagement, add genuine value — mention one relevant feature, current financing offer, or seasonal tip for Alberta drivers.\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji. Gentle urgency (not pushy).\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+",\nEnd with:\n"+sig, 600),
+      ]);
+      setSeqOut({ touch1: t1, touch2: t2, touch3: t3 });
+    } catch(e) {
+      setSeqOut({ touch1: "Error: "+e.message, touch2: "Error: "+e.message, touch3: "Error: "+e.message });
+    }
+    setSeqBusy(false);
   }, [vehicle, custName, salesName]);
 
   const doSMS = useCallback(async () => {
@@ -327,13 +344,14 @@ export default function App() {
     setSmsOut("loading");
     try {
       const text = await callClaude(null,
-        "Write exactly 5 short punchy lines for a text message from a car salesperson.\nFrom: "+(salesName||"Your Name")+" at LAG Auto\nTo: "+custName.split(" ")[0]+(custPhone?" ("+custPhone+")":"")+"\nVehicle: "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+"\nRules: 5 lines only. Short. Casual. Last line = CTA. NO emoji. NO asterisks. Return ONLY the 5 lines.", 200);
+        "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+custName.split(" ")[0]+(custPhone?" ("+custPhone+")":"")+" about the "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+" from lagauto.ca.\nRules:\n- MAXIMUM 160 characters total (count carefully)\n- Casual, friendly, direct\n- End with a clear CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else", 100);
       setSmsOut(text);
     } catch(e) { setSmsOut("Error: "+e.message); }
   }, [vehicle, custName, salesName, custPhone]);
 
   const canGen = emailOut!=="loading" && !!vehicle && !!custName && !!leadMsg;
   const emailDone = emailOut && emailOut!=="loading" && !emailOut.startsWith("Error:");
+  const canSeq = !!vehicle && !!custName && !seqBusy;
 
   return (
     <div className="app">
@@ -478,47 +496,135 @@ export default function App() {
           </div>
         )}
 
-        {/* OUTPUT */}
+        {/* OUTPUT — Initial Email */}
         {emailOut!==null && (
           <div className="card cc">
             {emailOut==="loading"
               ? <Spinner label="Writing your personalized email…"/>
               : <EmailCard text={emailOut} title={"📧 INITIAL REPLY · "+[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")+(vehicle?.stock?" · Stock #"+vehicle.stock:"")} color={CYAN}/>
             }
+          </div>
+        )}
 
-            {emailDone && (
-              <>
-                <div className="fu">
-                  <div className="fut">📅 3-TOUCH FOLLOW-UP SEQUENCE</div>
-                  <p className="fud">Most dealers never follow up. You just built a full sequence automatically.</p>
-                  <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
-                    <button className="bfu bgr" onClick={()=>doFollowUp("48hr")} disabled={fu48Out==="loading"}>{fu48Out==="loading"?"✨ Writing…":"📅 48hr Follow-Up"}</button>
-                    <button className="bfu bam" onClick={()=>doFollowUp("7day")} disabled={fu7Out==="loading"}>{fu7Out==="loading"?"✨ Writing…":"📆 7-Day Follow-Up"}</button>
+        {/* STAGE 3: SMS GENERATOR */}
+        {vehicle && (
+          <div className="card" style={{borderTop:"3px solid "+PURPLE}}>
+            <div className="badge" style={{background:PURPLE}}><div className="bn" style={{background:"rgba(255,255,255,0.25)"}}>📱</div>SMS GENERATOR</div>
+            <p className="hint">Generate a short text message (max 160 chars) for the same vehicle/customer scenario. Perfect for buyers who prefer texting.</p>
+            {(!custName) && <div style={{fontSize:11.5,color:"#a8a29e",marginBottom:14}}>⚠ Fill in customer name in Step 3 to enable SMS generation.</div>}
+            <button
+              className="bfu bpu"
+              style={{padding:"11px 22px",fontSize:13,fontWeight:700,borderRadius:10,marginBottom:12}}
+              onClick={doSMS}
+              disabled={smsOut==="loading"||!custName||!vehicle}
+            >
+              {smsOut==="loading"?"✨ Writing SMS…":"📱 Generate SMS (160 chars)"}
+            </button>
+            {smsOut==="loading" && <div style={{color:"#a8a29e",fontSize:13,display:"flex",alignItems:"center",gap:8}}><div className="spin" style={{width:14,height:14,margin:0}}/> Writing…</div>}
+            {smsOut && smsOut!=="loading" && (
+              smsOut.startsWith("Error:") ? (
+                <div className="eerr"><strong>Error:</strong> {smsOut.replace("Error:","").trim()}</div>
+              ) : (
+                <div className="sms">
+                  <div className="smsh">
+                    <span className="smsl">📱 TEXT MESSAGE · {[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")}</span>
+                    <button className="bsm" onClick={()=>copyText(smsOut)} style={{fontSize:11}}>Copy SMS</button>
                   </div>
-                  {fu48Out==="loading"&&<Spinner label="Writing 48hr follow-up…"/>}
-                  {fu48Out&&fu48Out!=="loading"&&<EmailCard text={fu48Out} title="📅 48-HOUR FOLLOW-UP" color={GREEN}/>}
-                  {fu7Out==="loading"&&<Spinner label="Writing 7-day follow-up…"/>}
-                  {fu7Out&&fu7Out!=="loading"&&<EmailCard text={fu7Out} title="📆 7-DAY FOLLOW-UP" color={GOLD}/>}
+                  <div style={{display:"flex",justifyContent:"flex-end"}}>
+                    <div className="smsbub">
+                      <div style={{fontSize:13.5,color:"#fff",lineHeight:1.7}}>{smsOut}</div>
+                    </div>
+                  </div>
+                  <div className="smschar" style={{color:smsOut.length>160?RED:"#a8a29e"}}>
+                    {smsOut.length} / 160 chars {smsOut.length>160?"⚠️ over limit — regenerate":"✓ good length"}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
+
+        {/* STAGE 3: 7-DAY FOLLOW-UP SEQUENCE */}
+        {vehicle && (
+          <div className="card" style={{borderTop:"3px solid "+GOLD}}>
+            <div className="badge bg"><div className="bn">📅</div>7-DAY FOLLOW-UP SEQUENCE</div>
+            <p className="hint">Generate all 3 follow-up touches at once. Most dealers never follow up — this puts you ahead of 90% of the competition.</p>
+
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
+              {[
+                {n:"1",label:"Touch 1 — Same-day thank you",type:"Email",color:GREEN,desc:"Sent the same day as the initial enquiry"},
+                {n:"2",label:"Touch 2 — 48-hour check-in",type:"SMS",color:PURPLE,desc:"Short text if no reply after 2 days"},
+                {n:"3",label:"Touch 3 — 7-day value-add",type:"Email",color:GOLD,desc:"Warm re-engagement with relevant info or offer"},
+              ].map(t=>(
+                <div key={t.n} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",borderRadius:10,border:"1.5px solid #e7e3dc",background:"#faf9f7"}}>
+                  <div style={{width:28,height:28,borderRadius:50,background:t.color,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:12,flexShrink:0}}>{t.n}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12.5,fontWeight:700,color:"#1c1917"}}>{t.label}</div>
+                    <div style={{fontSize:10.5,color:"#a8a29e",marginTop:2}}>{t.desc}</div>
+                  </div>
+                  <div style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,background:t.color+"20",color:t.color,border:"1px solid "+t.color+"40"}}>{t.type}</div>
+                </div>
+              ))}
+            </div>
+
+            {!custName && <div style={{fontSize:11.5,color:"#a8a29e",marginBottom:12}}>⚠ Fill in customer name in Step 3 to enable sequence generation.</div>}
+            <button
+              className="bgen"
+              style={{background:"linear-gradient(135deg,"+GOLD+",#e6a800)",marginTop:0}}
+              onClick={doFollowUpSequence}
+              disabled={!canSeq||!custName}
+            >
+              {seqBusy?"✨  Generating all 3 touches…":"⚡  Generate Follow-Up Sequence"}
+            </button>
+
+            {seqBusy && <Spinner label="Generating 3-touch sequence in parallel…"/>}
+
+            {seqOut && !seqBusy && (
+              <div style={{marginTop:24}}>
+                {/* Touch 1 */}
+                <div style={{marginBottom:20}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                    <div style={{width:24,height:24,borderRadius:50,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>1</div>
+                    <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:GREEN}}>TOUCH 1 — SAME-DAY THANK YOU · EMAIL</span>
+                  </div>
+                  <EmailCard text={seqOut.touch1} title="" color={GREEN}/>
                 </div>
 
-                <div className="fu">
-                  <div className="fut">📱 SMS VERSION</div>
-                  <p className="fud">5-line text for buyers who prefer texting.</p>
-                  <button className="bfu bpu" onClick={doSMS} disabled={smsOut==="loading"}>{smsOut==="loading"?"✨ Writing…":"📱 Generate SMS"}</button>
-                  {smsOut==="loading"&&<div style={{color:"#a8a29e",fontSize:13,marginTop:10,display:"flex",alignItems:"center",gap:8}}><div className="spin" style={{width:14,height:14,margin:0}}/> Writing SMS…</div>}
-                  {smsOut&&smsOut!=="loading"&&!smsOut.startsWith("Error:")&&(
+                {/* Touch 2 — SMS */}
+                <div style={{marginBottom:20}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                    <div style={{width:24,height:24,borderRadius:50,background:PURPLE,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>2</div>
+                    <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:PURPLE}}>TOUCH 2 — 48-HOUR CHECK-IN · SMS</span>
+                  </div>
+                  {seqOut.touch2.startsWith("Error:") ? (
+                    <div className="eerr"><strong>Error:</strong> {seqOut.touch2.replace("Error:","").trim()}</div>
+                  ) : (
                     <div className="sms">
-                      <div className="smsh"><span className="smsl">📱 TEXT MESSAGE</span>
-                        <button className="bsm" onClick={()=>{copyText(smsOut);}} style={{fontSize:11}}>Copy SMS</button>
+                      <div className="smsh">
+                        <span className="smsl">📱 48-HOUR CHECK-IN SMS</span>
+                        <button className="bsm" onClick={()=>copyText(seqOut.touch2)} style={{fontSize:11}}>Copy SMS</button>
                       </div>
                       <div style={{display:"flex",justifyContent:"flex-end"}}>
-                        <div className="smsbub"><div style={{fontSize:13.5,color:"#fff",lineHeight:1.7}}>{smsOut.split("\n").map((l,i)=><div key={i}>{l}</div>)}</div></div>
+                        <div className="smsbub">
+                          <div style={{fontSize:13.5,color:"#fff",lineHeight:1.7}}>{seqOut.touch2}</div>
+                        </div>
                       </div>
-                      <div className="smschar">{smsOut.length} chars {smsOut.length>160?"⚠️ over 160":"✓ good length"}</div>
+                      <div className="smschar" style={{color:seqOut.touch2.length>160?RED:"#a8a29e"}}>
+                        {seqOut.touch2.length} / 160 chars {seqOut.touch2.length>160?"⚠️ over limit":"✓ good length"}
+                      </div>
                     </div>
                   )}
                 </div>
-              </>
+
+                {/* Touch 3 */}
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                    <div style={{width:24,height:24,borderRadius:50,background:GOLD,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>3</div>
+                    <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:GOLD}}>TOUCH 3 — 7-DAY VALUE-ADD · EMAIL</span>
+                  </div>
+                  <EmailCard text={seqOut.touch3} title="" color={GOLD}/>
+                </div>
+              </div>
             )}
           </div>
         )}
