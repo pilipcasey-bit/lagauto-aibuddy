@@ -56,6 +56,31 @@ function parseEmail(raw){if(!raw)return{subj:"",body:""};const lines=raw.split("
 function lagSig(n){return[n||"[Your Name]","LAG Auto — Landsperg Automotive Group","Hyundai · Kia · Honda · Nissan · Mitsubishi · Ford · Jeep · Ram","📍 6444 67 Street, Red Deer, AB T4P 1A1","📞 1-403-348-8000  |  🌐 lagauto.ca"].join("\n");}
 function copyText(t){navigator.clipboard?.writeText(t).catch(()=>{});}
 
+async function sendSmsApi(to, message) {
+  const res = await fetch("/api/send-sms", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({to, message}),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || "Send failed");
+  return data;
+}
+
+async function sendEmailApi(to, subject, bodyText) {
+  const html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">'
+    + bodyText.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    + "</div>";
+  const res = await fetch("/api/send-email", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({to, subject, html}),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || "Send failed");
+  return data;
+}
+
 const NAVY="#002C5F",CYAN="#00AAD2",GOLD="#C8960C",GREEN="#16a34a",RED="#dc2626",PURPLE="#7c3aed";
 const TONES=["Warm & Friendly","Professional & Direct","Enthusiastic & Energetic"];
 const SAMPLES=["2026 Ram 1500 Sport","2026 Hyundai Santa Fe Hybrid Calligraphy","2025 Kia Telluride SX","2026 Jeep Compass Sport 4x4"];
@@ -98,6 +123,13 @@ label{display:block;font-size:11px;font-weight:600;color:#78716c;margin-bottom:6
 .bgen:disabled{background:#d6d3cd;color:#a3a09a;cursor:not-allowed;transform:none;box-shadow:none;}
 .bsm{background:#fff;border:1.5px solid #e7e3dc;border-radius:9px;padding:7px 15px;color:#78716c;font-size:11.5px;cursor:pointer;font-weight:600;font-family:inherit;transition:all .15s;}
 .bsm:hover{border-color:#a8a29e;color:#292524;}.bsm.ok{border-color:${GREEN};color:${GREEN};background:#f0fdf4;}
+.bsend{background:#f5f4f1;border:1.5px solid #d6d3cd;border-radius:9px;padding:6px 14px;color:#57534e;font-size:11px;cursor:pointer;font-weight:600;font-family:inherit;transition:all .15s;}
+.bsend:hover:not(:disabled){background:#e7e3dc;color:#292524;border-color:#a8a29e;}
+.bsend:disabled{opacity:.5;cursor:not-allowed;}
+.bsend.ok{border-color:${GREEN};color:${GREEN};background:#f0fdf4;}
+.bsend.err{border-color:${RED};color:${RED};background:#fef2f2;}
+.snd-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed #e7e3dc;}
+.snd-disc{font-size:9.5px;color:#c4bdb4;}
 .bfu{border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .15s;}
 .bfu:disabled{opacity:.45;cursor:not-allowed;}
 .bgr{background:${GREEN};color:#fff;}.bgr:hover:not(:disabled){background:#15803d;}
@@ -194,6 +226,75 @@ function CopyBtn({ getText }) {
     <button className={"bsm"+(ok?" ok":"")} onClick={()=>{copyText(getText());setOk(true);setTimeout(()=>setOk(false),2000);}}>
       {ok?"✓ Copied!":"Copy Email"}
     </button>
+  );
+}
+
+function SendEmailBtn({ text }) {
+  const [status, setStatus] = useState(null); // null | "sending" | "ok" | "err"
+  const [msg, setMsg] = useState("");
+  const { subj, body } = parseEmail(text || "");
+  const handleSend = async () => {
+    const to = window.prompt("Recipient email address:");
+    if (!to || !to.trim()) return;
+    setStatus("sending"); setMsg("");
+    try {
+      await sendEmailApi(to.trim(), subj || "Follow-up from LAG Auto", body);
+      setStatus("ok"); setMsg("Sent!");
+    } catch(e) {
+      setStatus("err"); setMsg(e.message);
+    }
+    setTimeout(() => { setStatus(null); setMsg(""); }, 5000);
+  };
+  return (
+    <div className="snd-row">
+      <button
+        className={"bsend"+(status==="ok"?" ok":status==="err"?" err":"")}
+        onClick={handleSend}
+        disabled={status==="sending"}
+      >
+        {status==="sending"?"Sending…":status==="ok"?"✓ Sent!":status==="err"?"✕ Failed":"📧 Send Email"}
+      </button>
+      {msg && <span style={{fontSize:11,color:status==="ok"?"#16a34a":"#dc2626",fontWeight:500}}>{msg}</span>}
+      {!status && <span className="snd-disc">Test mode — limited to verified recipients</span>}
+    </div>
+  );
+}
+
+function SendSmsBtn({ message, defaultPhone }) {
+  const [phone, setPhone] = useState(defaultPhone || "7807002271");
+  const [status, setStatus] = useState(null); // null | "sending" | "ok" | "err"
+  const [msg, setMsg] = useState("");
+  const handleSend = async () => {
+    if (!phone.trim()) return;
+    setStatus("sending"); setMsg("");
+    try {
+      await sendSmsApi(phone.trim(), message);
+      setStatus("ok"); setMsg("Sent!");
+    } catch(e) {
+      setStatus("err"); setMsg(e.message);
+    }
+    setTimeout(() => { setStatus(null); setMsg(""); }, 5000);
+  };
+  return (
+    <div className="snd-row" style={{alignItems:"center"}}>
+      <input
+        className="inp"
+        style={{width:140,fontSize:11.5,padding:"5px 10px"}}
+        value={phone}
+        onChange={e=>setPhone(e.target.value)}
+        placeholder="+17807002271"
+        disabled={status==="sending"}
+      />
+      <button
+        className={"bsend"+(status==="ok"?" ok":status==="err"?" err":"")}
+        onClick={handleSend}
+        disabled={status==="sending"||!phone.trim()}
+      >
+        {status==="sending"?"Sending…":status==="ok"?"✓ Sent!":status==="err"?"✕ Failed":"📱 Send SMS"}
+      </button>
+      {msg && <span style={{fontSize:11,color:status==="ok"?"#16a34a":"#dc2626",fontWeight:500}}>{msg}</span>}
+      {!status && <span className="snd-disc">Test mode — verified numbers only</span>}
+    </div>
   );
 }
 
@@ -504,7 +605,10 @@ export default function App() {
           <div className="card cc">
             {emailOut==="loading"
               ? <Spinner label="Writing your personalized email…"/>
-              : <EmailCard text={emailOut} title={"📧 INITIAL REPLY · "+[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")+(vehicle?.stock?" · Stock #"+vehicle.stock:"")} color={CYAN}/>
+              : <>
+                  <EmailCard text={emailOut} title={"📧 INITIAL REPLY · "+[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")+(vehicle?.stock?" · Stock #"+vehicle.stock:"")} color={CYAN}/>
+                  {emailDone && <SendEmailBtn text={emailOut}/>}
+                </>
             }
           </div>
         )}
@@ -541,6 +645,7 @@ export default function App() {
                   <div className="smschar" style={{color:smsOut.length>160?RED:"#a8a29e"}}>
                     {smsOut.length} / 160 chars {smsOut.length>160?"⚠️ over limit — regenerate":"✓ good length"}
                   </div>
+                  <SendSmsBtn message={smsOut} defaultPhone="7807002271"/>
                 </div>
               )
             )}
@@ -591,6 +696,7 @@ export default function App() {
                     <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:GREEN}}>TOUCH 1 — SAME-DAY THANK YOU · EMAIL</span>
                   </div>
                   <EmailCard text={seqOut.touch1} title="" color={GREEN}/>
+                  {!seqOut.touch1.startsWith("Error:") && <SendEmailBtn text={seqOut.touch1}/>}
                 </div>
 
                 {/* Touch 2 — SMS */}
@@ -615,6 +721,7 @@ export default function App() {
                       <div className="smschar" style={{color:seqOut.touch2.length>160?RED:"#a8a29e"}}>
                         {seqOut.touch2.length} / 160 chars {seqOut.touch2.length>160?"⚠️ over limit":"✓ good length"}
                       </div>
+                      <SendSmsBtn message={seqOut.touch2} defaultPhone="7807002271"/>
                     </div>
                   )}
                 </div>
@@ -626,6 +733,7 @@ export default function App() {
                     <span style={{fontSize:10,fontWeight:700,letterSpacing:2,color:GOLD}}>TOUCH 3 — 7-DAY VALUE-ADD · EMAIL</span>
                   </div>
                   <EmailCard text={seqOut.touch3} title="" color={GOLD}/>
+                  {!seqOut.touch3.startsWith("Error:") && <SendEmailBtn text={seqOut.touch3}/>}
                 </div>
               </div>
             )}
