@@ -282,7 +282,7 @@ export default function App() {
     const oemTitle = (OEM[v.make]||{}).title||v.make+" Canada";
     const oemUrl = getOEMUrl(v.make, v.model);
     const vids = useVids ? v.videos.filter((_,i)=>selVids.includes(i)) : [];
-    const vBlock = vids.length ? "Include these Canadian resource links naturally:\n"+vids.map(vid=>"- "+vid.title+" ("+vid.channel+"): "+vid.url).join("\n")+"\n- "+oemTitle+": "+oemUrl+"\n\n" : "";
+    const vBlock = vids.length ? "MANDATORY LINKS — You MUST embed ALL of these actual URLs verbatim in the email body. Do NOT write placeholder text like '[link]' or '[URL]'. Use the real URLs exactly as shown:\n"+vids.map(vid=>"- "+vid.title+" — "+vid.url).join("\n")+"\n- "+oemTitle+" official specs — "+oemUrl+"\n\nEmbed them as plain text URLs inline in the email, e.g.: 'Here's the Canadian review: https://...' and 'See full specs at: https://...'\n\n" : "";
     const noteLines = [notes.q1&&"Pricing: "+notes.q1,notes.q2&&"Features: "+notes.q2,notes.q3&&"Why us: "+notes.q3,notes.q4&&"Timeline: "+notes.q4,notes.q5&&"Next step: "+notes.q5].filter(Boolean).join("\n");
     return [
       "You are AutoReply AI for Landsperg Automotive Group (LAG Auto), a trusted multi-brand dealership in Red Deer & Leduc, Alberta, Canada (16 stores).",
@@ -293,7 +293,7 @@ export default function App() {
       "Answer these naturally:\n1. Cost — competitive financing, invite them for exact CAD figures\n2. Features — 2-3 highlights relevant to their message\n3. Why LAG Auto — 16 stores, no-pressure, Les Landsperg stands behind every deal\n4. Timeline — most drive within 1-3 days\n5. Next step — warm CTA with [Booking Link]",
       vBlock,
       noteLines?"Salesperson notes (weave in naturally):\n"+noteLines:"",
-      "Include: 🎥 [Personal video: 60-sec walkaround — try Covideo or BombBomb]",
+      "Include: 🎥 [Personal video: 60-sec walkaround — try Covideo or BombBomb]\n\nIMPORTANT: Any links provided above are REAL working URLs. Paste them verbatim. Never write '[link]', '[URL]', or any bracketed placeholder for a link.",
       "RULES: No markdown, no bullets, no bold, no headers. Natural paragraphs. Max 3 emoji.\nLine 1: SUBJECT: [subject]\nBlank line, then: Hi [First Name],\nEnd with warm sign-off then:\n"+lagSig(salesName),
     ].filter(Boolean).join("\n\n");
   }, [vehicle, toneIdx, tradeIn, useVids, selVids, notes, salesName]);
@@ -314,8 +314,12 @@ export default function App() {
     const delay = type==="48hr"?"48 hours":"7 days";
     const style = type==="48hr"?"very brief casual check-in, 3-4 sentences":"warm re-engagement, gentle urgency";
     try {
+      const vids7 = vehicle.videos || [];
+      const oemUrl7 = getOEMUrl(vehicle.make, vehicle.model);
+      const oemTitle7 = (OEM[vehicle.make]||{}).title||vehicle.make+" Canada";
+      const linkBlock7 = type==="7day" && vids7.length ? "\nInclude ONE of these real links naturally in the email body (paste URL verbatim, no placeholders):\n- Review: "+vids7[0].url+"\n- Specs: "+oemUrl7+"\n" : "";
       const text = await callClaude(null,
-        "Write a "+style+" follow-up email.\nFrom: "+(salesName||"[Your Name]")+" at LAG Auto\nTo: "+custName+" re: "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+"\nNo reply in "+delay+".\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji.\nLine 1: SUBJECT: [subject]\nThen: Hi "+custName.split(" ")[0]+",\nEnd with:\n"+lagSig(salesName), 700);
+        "Write a "+style+" follow-up email.\nFrom: "+(salesName||"[Your Name]")+" at LAG Auto\nTo: "+custName+" re: "+[vehicle.year,vehicle.make,vehicle.model].filter(Boolean).join(" ")+"\nNo reply in "+delay+"."+linkBlock7+"\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji.\nLine 1: SUBJECT: [subject]\nThen: Hi "+custName.split(" ")[0]+",\nEnd with:\n"+lagSig(salesName), 700);
       set(text);
     } catch(e) { set("Error: "+e.message); }
   }, [vehicle, custName, salesName]);
