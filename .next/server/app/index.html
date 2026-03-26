@@ -1,0 +1,115 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/0ht900cau6_ur.js"/><script src="/_next/static/chunks/0p5.qr0b94vxo.js" async=""></script><script src="/_next/static/chunks/16g.ca89g7fib.js" async=""></script><script src="/_next/static/chunks/turbopack-0mbyzpf8xm.r7.js" async=""></script><script src="/_next/static/chunks/0dbhjjzl8qfwv.js" async=""></script><script src="/_next/static/chunks/16ydwk4_84~wv.js" async=""></script><title>LAG Auto — AutoReply AI</title><meta name="description" content="Sales email generator for LAG Auto dealership"/><script src="/_next/static/chunks/03~yq9q893hmn.js" noModule=""></script></head><body><div hidden=""><!--$--><!--/$--></div><div class="app"><style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#f2f0eb;}
+.app{font-family:'DM Sans',system-ui,sans-serif;background:#f2f0eb;min-height:100vh;color:#1c1917;}
+.hdr{background:#002C5F;padding:0 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(0,44,95,.3);position:sticky;top:0;z-index:100;}
+.hdr-l{display:flex;align-items:center;gap:16px;padding:13px 0;}
+.logo{background:#fff;border-radius:6px;padding:5px 12px;line-height:1.1;}
+.logo-lag{font-weight:900;font-size:15px;color:#002C5F;letter-spacing:3px;}
+.logo-auto{font-weight:300;font-size:10px;color:#002C5F;}
+.hdr-name{font-family:'DM Serif Display',serif;font-size:17px;color:#fff;}
+.hdr-sub{font-size:9px;color:#00AAD2;letter-spacing:2px;margin-top:2px;font-weight:600;}
+.hdr-r{font-size:10px;color:rgba(255,255,255,.3);display:flex;gap:4px;align-items:center;}
+.main{max-width:780px;margin:0 auto;padding:28px 18px 52px;}
+.card{background:#fff;border:1px solid #e7e3dc;border-radius:16px;padding:24px 26px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);}
+.cc{border-top:3px solid #00AAD2;}.cg{border-top:3px solid #C8960C;}
+.cn{background:#002C5F;border:none;border-radius:16px;padding:24px 26px;margin-bottom:16px;}
+.badge{display:inline-flex;align-items:center;gap:8px;background:#002C5F;color:#fff;font-size:9.5px;font-weight:700;letter-spacing:1.5px;padding:3px 12px 3px 3px;border-radius:20px;margin-bottom:14px;}
+.bn{background:#00AAD2;color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;}
+.bg{background:#C8960C;}.bg .bn{background:#002C5F;}
+label{display:block;font-size:11px;font-weight:600;color:#78716c;margin-bottom:6px;}
+.slbl{font-size:9.5px;font-weight:700;color:#a8a29e;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;}
+.hint{font-size:11.5px;color:#a8a29e;line-height:1.7;margin:0 0 14px;}
+.inp{width:100%;padding:11px 14px;border:1.5px solid #e7e3dc;border-radius:10px;font-size:13.5px;font-family:inherit;background:#faf9f7;color:#1c1917;outline:none;transition:border-color .15s,box-shadow .15s;}
+.inp:focus{border-color:#00AAD2;box-shadow:0 0 0 3px rgba(0,170,210,.1);background:#fff;}
+.inp::placeholder{color:#c4bdb4;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.s2{grid-column:1/-1;}
+.divider{border:none;border-top:1px solid #e7e3dc;margin:18px 0;}
+.bp{background:#002C5F;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,44,95,.25);transition:all .15s;white-space:nowrap;}
+.bp:hover:not(:disabled){background:#003a7a;transform:translateY(-1px);}
+.bp:disabled{background:#d6d3cd;color:#a3a09a;cursor:not-allowed;transform:none;}
+.bgen{width:100%;padding:15px;font-size:14.5px;letter-spacing:.4px;background:linear-gradient(135deg,#002C5F,#005080);border-radius:12px;margin-top:20px;border:none;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 18px rgba(0,44,95,.28);transition:all .15s;}
+.bgen:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,44,95,.38);}
+.bgen:disabled{background:#d6d3cd;color:#a3a09a;cursor:not-allowed;transform:none;box-shadow:none;}
+.bsm{background:#fff;border:1.5px solid #e7e3dc;border-radius:9px;padding:7px 15px;color:#78716c;font-size:11.5px;cursor:pointer;font-weight:600;font-family:inherit;transition:all .15s;}
+.bsm:hover{border-color:#a8a29e;color:#292524;}.bsm.ok{border-color:#16a34a;color:#16a34a;background:#f0fdf4;}
+.bfu{border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .15s;}
+.bfu:disabled{opacity:.45;cursor:not-allowed;}
+.bgr{background:#16a34a;color:#fff;}.bgr:hover:not(:disabled){background:#15803d;}
+.bam{background:#d97706;color:#fff;}.bam:hover:not(:disabled){background:#b45309;}
+.bpu{background:#7c3aed;color:#fff;}.bpu:hover:not(:disabled){background:#6d28d9;}
+.qp{background:none;border:1.5px dashed #d6d3cd;border-radius:8px;padding:5px 11px;color:#a8a29e;font-size:10.5px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.qp:hover{border-color:#002C5F;color:#002C5F;background:#f0f4ff;}
+.tog{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.ttrack{width:38px;height:22px;border-radius:11px;position:relative;transition:background .2s;flex-shrink:0;}
+.ton{background:#00AAD2;}.toff{background:#d6d3cd;}
+.tthumb{position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s;}
+.vy{font-family:'DM Serif Display',serif;font-size:26px;color:#fff;line-height:1.1;}
+.vm{font-size:14px;color:rgba(255,255,255,.55);margin-top:4px;margin-bottom:14px;}
+.vtag{display:inline-block;border-radius:20px;padding:3px 12px;font-size:10.5px;font-weight:600;margin:0 4px 6px 0;}
+.vtd{background:rgba(255,255,255,.1);color:rgba(255,255,255,.55);}
+.vtg{background:rgba(34,197,94,.15);color:#4ade80;}
+.vlink{font-size:11px;color:#00AAD2;text-decoration:none;display:inline-block;margin-top:8px;font-weight:500;}
+.vlink:hover{text-decoration:underline;}
+.rbox{background:rgba(255,255,255,.06);border-radius:12px;padding:16px 18px;border:1px solid rgba(255,255,255,.08);min-width:200px;}
+.rhd{font-size:9px;color:#C8960C;font-weight:700;letter-spacing:2px;margin-bottom:12px;}
+.ra{font-size:11.5px;color:#00AAD2;font-weight:600;text-decoration:none;display:block;}
+.ra:hover{text-decoration:underline;}
+.rw{font-size:10px;color:rgba(255,255,255,.28);margin-top:2px;line-height:1.4;}
+.tp{flex:1;min-width:130px;padding:12px 14px;border-radius:12px;cursor:pointer;border:2px solid #e7e3dc;background:#faf9f7;transition:all .15s;}
+.tp:hover{border-color:#a8a29e;}.tp.on{border-color:#002C5F;background:#eef2ff;}
+.tpl{font-size:12px;font-weight:700;color:#78716c;margin-bottom:3px;}.tp.on .tpl{color:#002C5F;}
+.tpd{font-size:10px;color:#c4bdb4;line-height:1.4;}
+.trade{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:12px;cursor:pointer;border:2px solid #e7e3dc;background:#faf9f7;margin-top:14px;transition:all .15s;}
+.trade:hover{border-color:#a8a29e;}.trade.on{border-color:#C8960C;background:#fffbf0;}
+.tchk{width:20px;height:20px;border-radius:6px;flex-shrink:0;border:2px solid #d6d3cd;background:#fff;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.trade.on .tchk{border-color:#C8960C;background:#C8960C;}
+.vr{display:flex;gap:14px;padding:13px 16px;border-radius:12px;border:2px solid #e7e3dc;background:#faf9f7;cursor:pointer;transition:all .15s;margin-bottom:8px;}
+.vr:hover{border-color:#a8a29e;}.vr.on{border-color:#00AAD2;background:#f0faff;}.vr.always{border-color:#00AAD2;background:#f0faff;cursor:default;}
+.vrr{width:18px;height:18px;border-radius:50%;flex-shrink:0;margin-top:2px;border:2px solid #d6d3cd;background:#fff;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.vrr.on{border-color:#00AAD2;background:#00AAD2;}
+.vrd{width:6px;height:6px;border-radius:50%;background:#fff;}
+.vt{font-weight:600;font-size:12.5px;color:#1c1917;}
+.vme{font-size:10.5px;color:#a8a29e;margin:2px 0 5px;}
+.vp{font-size:10.5px;color:#00AAD2;font-weight:500;text-decoration:none;}
+.vp:hover{text-decoration:underline;}
+.nr{background:#faf9f7;border:1.5px solid #e7e3dc;border-radius:12px;padding:12px 16px;margin-bottom:10px;}
+.nr:focus-within{border-color:#00AAD2;background:#fff;box-shadow:0 0 0 3px rgba(0,170,210,.08);}
+.nr input{border:none;background:transparent;padding:5px 0;box-shadow:none;font-size:13px;}
+.nr input:focus{box-shadow:none;}
+.ck{background:#faf9f7;border:1.5px solid #e7e3dc;border-radius:12px;padding:12px 16px;margin-top:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+.cki{display:flex;align-items:center;gap:5px;font-size:11px;}
+.ckd{width:17px;height:17px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;}
+.ckok{background:#dcfce7;color:#16a34a;}.ckno{background:#fee2e2;color:#dc2626;}
+.cktok{color:#6b7280;}.cktno{color:#dc2626;font-weight:600;}
+.ehdr{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+.etit{font-size:9.5px;font-weight:700;letter-spacing:2px;}
+.ebox{background:#faf9f7;border:1.5px solid #e7e3dc;border-radius:14px;padding:22px 24px;}
+.esubj{font-size:13px;font-weight:700;color:#002C5F;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e7e3dc;}
+.ebody{font-size:13.5px;line-height:2;color:#374151;white-space:pre-wrap;font-family:inherit;}
+.eerr{background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:16px;color:#dc2626;font-size:13px;line-height:1.6;}
+.ibx{background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e7e3dc;}
+.ibxh{background:#f3f2f0;border-bottom:1px solid #e7e3dc;padding:14px 18px;}
+.ibxav{width:32px;height:32px;border-radius:50%;background:#002C5F;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0;}
+.ibxb{font-size:13.5px;line-height:1.9;color:#222;white-space:pre-wrap;font-family:Georgia,serif;padding:18px 20px;}
+.ibxf{background:#f3f2f0;border-top:1px solid #e7e3dc;padding:8px 18px;display:flex;gap:18px;}
+.sms{background:#f5f4f1;border:1.5px solid #e7e3dc;border-radius:14px;padding:16px;margin-top:12px;}
+.smsh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.smsl{font-size:9px;font-weight:700;letter-spacing:2px;color:#7c3aed;}
+.smsbub{background:#007AFF;border-radius:18px 18px 4px 18px;padding:12px 16px;max-width:85%;margin-left:auto;}
+.smschar{font-size:9.5px;color:#a8a29e;text-align:right;margin-top:8px;}
+.fu{border-top:1px solid #e7e3dc;margin-top:20px;padding-top:20px;}
+.fut{font-size:9.5px;font-weight:700;letter-spacing:2px;color:#a8a29e;margin-bottom:4px;}
+.fud{font-size:11.5px;color:#a8a29e;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.spin{width:32px;height:32px;border:3px solid rgba(0,170,210,.15);border-top-color:#00AAD2;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+.anim{animation:fi .3s ease;}
+.ftr{background:#002C5F;padding:20px 28px;text-align:center;margin-top:8px;}
+.ftrn{font-family:'DM Serif Display',serif;font-size:15px;color:#fff;margin-bottom:4px;}
+.ftrb{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;}
+.ftra{font-size:10px;color:rgba(255,255,255,.18);}
+@media(max-width:520px){.g2{grid-template-columns:1fr;}.s2{grid-column:1;}.hdr-r{display:none;}}
+</style><div class="hdr"><div class="hdr-l"><div class="logo"><div class="logo-lag">LAG</div><div class="logo-auto">AUTO</div></div><div><div class="hdr-name">AutoReply AI</div><div class="hdr-sub">THE LES STANDARD · LANDSPERG AUTOMOTIVE GROUP</div></div></div><div class="hdr-r"><span>📍 6444 67 St, Red Deer AB</span><span style="margin:0 4px;color:rgba(255,255,255,.15)">·</span><span>📞 1-403-348-8000</span><span style="margin:0 4px;color:rgba(255,255,255,.15)">·</span><span>lagauto.ca</span></div></div><div class="main"><div class="card cc"><div class="badge"><div class="bn">1</div>VEHICLE LOOKUP</div><p class="hint">Paste a lagauto.ca URL — or type like <span style="color:#00AAD2;background:#f0faff;border:1px solid #bde8f5;padding:1px 7px;border-radius:4px;font-size:11px">2026 Jeep Compass Sport</span></p><div style="display:flex;gap:10px"><input class="inp" style="flex:1" placeholder="https://www.lagauto.ca/... or type a vehicle name" value=""/><button class="bp">Look Up →</button></div><div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap"><button class="qp">2026 Hyundai Santa Fe Hybrid Calligraphy</button><button class="qp">2025 Kia Telluride SX</button><button class="qp">2026 Jeep Compass Sport 4x4</button><button class="qp">2024 Ram 1500 Lariat</button></div></div></div><div class="ftr"><div class="ftrn">Landsperg Automotive Group</div><div class="ftrb">Hyundai · Kia · Honda · Nissan · Mitsubishi · Ford · Jeep · Ram · Red Deer &amp; Leduc, AB</div><div class="ftra">6444 67 Street, Red Deer, AB T4P 1A1 · 1-403-348-8000 · lagauto.ca</div><div style="font-size:9px;color:rgba(255,255,255,.08);margin-top:10px;letter-spacing:2px">AUTOREPLY AI · POWERED BY CLAUDE · BUILT FOR LES</div></div></div><!--$--><!--/$--><script src="/_next/static/chunks/0ht900cau6_ur.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[39756,[\"/_next/static/chunks/0dbhjjzl8qfwv.js\"],\"default\"]\n3:I[37457,[\"/_next/static/chunks/0dbhjjzl8qfwv.js\"],\"default\"]\n4:I[10608,[\"/_next/static/chunks/0dbhjjzl8qfwv.js\",\"/_next/static/chunks/16ydwk4_84~wv.js\"],\"default\"]\n5:I[97367,[\"/_next/static/chunks/0dbhjjzl8qfwv.js\"],\"OutletBoundary\"]\n6:\"$Sreact.suspense\"\n8:I[97367,[\"/_next/static/chunks/0dbhjjzl8qfwv.js\"],\"ViewportBoundary\"]\na:I[97367,[\"/_next/static/chunks/0dbhjjzl8qfwv.js\"],\"MetadataBoundary\"]\nc:I[68027,[\"/_next/static/chunks/0dbhjjzl8qfwv.js\"],\"default\",1]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"c\":[\"\",\"\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[\"__PAGE__\",{}]},\"$undefined\",\"$undefined\",16],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"script\",\"script-0\",{\"src\":\"/_next/static/chunks/0dbhjjzl8qfwv.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[\"$\",\"body\",null,{\"children\":[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[[\"$\",\"$L4\",null,{}],[[\"$\",\"script\",\"script-0\",{\"src\":\"/_next/static/chunks/16ydwk4_84~wv.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"$L5\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@7\"}]}]]}],{},null,false,null]},null,false,null],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$L8\",null,{\"children\":\"$L9\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$La\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lb\"}]}]}],null]}],false]],\"m\":\"$undefined\",\"G\":[\"$c\",[]],\"S\":true,\"h\":null,\"s\":\"$undefined\",\"l\":\"$undefined\",\"p\":\"$undefined\",\"d\":\"$undefined\",\"b\":\"chXuJyxgVLLncqKo2nAUe\"}\n"])</script><script>self.__next_f.push([1,"9:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n"])</script><script>self.__next_f.push([1,"7:null\nb:[[\"$\",\"title\",\"0\",{\"children\":\"LAG Auto — AutoReply AI\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Sales email generator for LAG Auto dealership\"}]]\n"])</script></body></html>

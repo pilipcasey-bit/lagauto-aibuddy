@@ -1,0 +1,31 @@
+{
+  "name": "lagauto-aibuddy",
+  "version": "1.0.0",
+  "description": "LAG Auto AI Buddy - Sales email generator",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pilipcasey-bit/lagauto-aibuddy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pilipcasey-bit/lagauto-aibuddy/issues"
+  },
+  "homepage": "https://github.com/pilipcasey-bit/lagauto-aibuddy#readme",
+  "dependencies": {
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.14",
+    "typescript": "6.0.2"
+  }
+}
