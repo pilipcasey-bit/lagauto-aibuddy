@@ -298,7 +298,7 @@ export default function App() {
       vBlock,
       noteLines?"Salesperson notes (weave in naturally):\n"+noteLines:"",
       "Include: 🎥 [Personal video: 60-sec walkaround — try Covideo or BombBomb]\n\nIMPORTANT: Any links provided above are REAL working URLs. Paste them verbatim. Never write '[link]', '[URL]', or any bracketed placeholder for a link.",
-      "RULES: No markdown, no bullets, no bold, no headers. Natural paragraphs. Max 3 emoji.\nLine 1: SUBJECT: [subject]\nBlank line, then: Hi [First Name],\nEnd with warm sign-off then:\n"+lagSig(salesName),
+      "RULES: No markdown, no bullets, no bold, no headers. Natural paragraphs. Max 3 emoji.\nLine 1: SUBJECT: [subject]\nBlank line, then: Hi [First Name],\nEnd with warm sign-off then:\n"+lagSig(salesName)+"\n\nSTYLE: No em dashes (use a regular dash or comma instead). Never use these words: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Mix short punchy sentences with longer ones - vary your rhythm. Sound like a real Alberta car salesperson, not a corporate AI. Use contractions naturally: you're, we'd, it's, I've, that's.",
     ].filter(Boolean).join("\n\n");
   }, [vehicle, toneIdx, tradeIn, useVids, selVids, notes, salesName]);
 
@@ -327,13 +327,13 @@ export default function App() {
       const [t1, t2, t3] = await Promise.all([
         // Touch 1: Same-day thank-you email
         callClaude(null,
-          "Write a same-day thank-you email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" today.\nTone: warm, genuine, brief (4-5 sentences). No pressure. They just reached out.\nRules: No markdown, no bullets. Max 2 emoji.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+",\nEnd with:\n"+sig, 500),
+          "Write a same-day thank-you email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" today.\nTone: warm, genuine, brief (4-5 sentences). No pressure. They just reached out.\nRules: No markdown, no bullets. Max 2 emoji. No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Use contractions naturally (you're, I'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+",\nEnd with:\n"+sig, 500),
         // Touch 2: 48-hour SMS (hard max 160 chars)
         callClaude(null,
           "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+firstName+" about the "+vName+".\nContext: 48 hours have passed since they enquired. No reply yet. Just checking in.\nRules:\n- MAXIMUM 160 characters total (count carefully)\n- Casual, friendly tone\n- End with a simple CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else", 100),
         // Touch 3: 7-day value-add email
         callClaude(null,
-          "Write a 7-day follow-up email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" 7 days ago.\nTone: warm re-engagement, add genuine value — mention one relevant feature, current financing offer, or seasonal tip for Alberta drivers.\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji. Gentle urgency (not pushy).\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+","+linkBlock7+"\nEnd with:\n"+sig, 600),
+          "Write a 7-day follow-up email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" 7 days ago.\nTone: warm re-engagement, add genuine value - mention one relevant feature, current financing offer, or seasonal tip for Alberta drivers.\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji. Gentle urgency (not pushy). No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Mix short punchy sentences with longer ones. Use contractions naturally (you're, we'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+","+linkBlock7+"\nEnd with:\n"+sig, 600),
       ]);
       setSeqOut({ touch1: t1, touch2: t2, touch3: t3 });
     } catch(e) {

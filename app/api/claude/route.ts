@@ -2,16 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
+export async function GET() {
+  return NextResponse.json({ status: "ok" }, { headers: CORS_HEADERS });
+}
+
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
       { error: { message: "ANTHROPIC_API_KEY not configured" } },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 
-  const body = await req.json();
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: { message: "Invalid request body" } },
+      { status: 400, headers: CORS_HEADERS }
+    );
+  }
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -31,8 +53,8 @@ export async function POST(req: NextRequest) {
   const data = await response.json();
 
   if (!response.ok) {
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { status: response.status, headers: CORS_HEADERS });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, { headers: CORS_HEADERS });
 }
