@@ -60,7 +60,7 @@ const SLUGS = {"Santa Fe Hybrid":"santa-fe","Santa Fe":"santa-fe","Tucson Hybrid
 
 function getOEMUrl(make,model){const o=OEM[make];if(!o)return"https://www.lagauto.ca";const slug=SLUGS[model]||(model||"").toLowerCase().replace(/ /g,"-");if(make==="Nissan"){const nissanSlugs={"Rogue":"crossovers-suvs/rogue","Pathfinder":"crossovers-suvs/pathfinder","Qashqai":"crossovers-suvs/qashqai","Murano":"crossovers-suvs/murano","Armada":"crossovers-suvs/armada","Kicks":"crossovers-suvs/kicks","Frontier":"trucks/frontier","Sentra":"cars/sentra","Altima":"cars/altima"};const ns=nissanSlugs[model];return ns?"https://www.nissan.ca/vehicles/"+ns+".html":"https://www.nissan.ca";}if(make==="Mitsubishi")return o.base+"/vehicles/"+slug;if(make==="Ford")return"https://www.ford.ca/"+slug+"/";if(["Jeep","Chrysler","Dodge","Ram"].includes(make))return o.base+"/vehicles/"+slug+".html";return o.base+"/"+slug;}
 function getLagAutoInventoryUrl(make,model){const q=[make&&"make="+encodeURIComponent(make),model&&"model="+encodeURIComponent(model)].filter(Boolean).join("&");return"https://www.lagauto.ca/en/new-inventory"+(q?"?"+q:"");}
-function getVideos(make,model,year){const base=[year,make,model].filter(Boolean).join(" ");const isH=/hybrid|phev|ev|ioniq|mach-e|niro/i.test(model||"");const ytQ=encodeURIComponent(base+(isH?" hybrid review walkaround":" review walkaround"));const atMake=encodeURIComponent(make||"");const atModel=encodeURIComponent(model||"");const atYear=year||"2026";const atUrl="https://www.autotrader.ca/cars/?mdl="+atModel+"&mk="+atMake+"&yRng="+atYear+"%2C"+atYear;const lagUrl=getLagAutoInventoryUrl(make,model);return[{title:base+" — AutoTrader.ca Listings",channel:"AutoTrader.ca",url:atUrl,reason:"Canada's #1 auto site — current listings"},{title:base+(isH?" Hybrid Review & Walkaround":" Review & Walkaround"),channel:"YouTube Search →",url:"https://www.youtube.com/results?search_query="+ytQ+"&sp=CAMSAhAB",reason:"YouTube search — recent walkarounds & reviews"},{title:"LAG Auto — "+[make,model].filter(Boolean).join(" ")+" Inventory",channel:"LAG Auto Inventory →",url:lagUrl,reason:"Current in-stock units at LAG Auto"}];}
+function getVideos(make,model,year){const base=[year,make,model].filter(Boolean).join(" ");const isH=/hybrid|phev|ev|ioniq|mach-e|niro/i.test(model||"");const ytQ=encodeURIComponent(base+(isH?" hybrid review walkaround":" review walkaround"));const lagUrl=getLagAutoInventoryUrl(make,model);return[{title:base+(isH?" Hybrid Review & Walkaround":" Review & Walkaround"),channel:"YouTube Search →",url:"https://www.youtube.com/results?search_query="+ytQ+"&sp=CAMSAhAB",reason:"YouTube search — recent walkarounds & reviews"},{title:"LAG Auto — "+[make,model].filter(Boolean).join(" ")+" Inventory",channel:"LAG Auto Inventory →",url:lagUrl,reason:"Current in-stock units at LAG Auto"}];}
 function parseVehicle(input){const s=input.toLowerCase().replace(/-/g," ");const yearM=s.match(/20(1[6-9]|2[0-9])/);const year=yearM?yearM[0]:null;const makeKey=Object.keys(MAKE_MODELS).find(m=>s.includes(m))||null;const make=makeKey?makeKey.charAt(0).toUpperCase()+makeKey.slice(1):null;let model=null;if(makeKey){const f=MAKE_MODELS[makeKey].find(m=>s.includes(m));if(f)model=f.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}const trim=TRIMS.find(t=>s.includes(t));const trimProper=trim?trim.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" "):null;const vinM=input.match(/[A-HJ-NPR-Z0-9]{17}/i);const vin=vinM?vinM[0].toUpperCase():null;return{year,make,model,trim:trimProper,vin,stock:vin?vin.slice(-6):null};}
 function parseEmail(raw){if(!raw)return{subj:"",body:""};const lines=raw.split("\n");const si=lines.findIndex(l=>l.startsWith("SUBJECT:"));const subj=si>=0?lines[si].replace("SUBJECT:","").trim():"";const bi=lines.findIndex(l=>/^Hi /i.test(l.trim()));const body=lines.slice(bi>=0?bi:(si>=0?si+2:0)).join("\n").trim();return{subj,body};}
 function lagSig(n){return[n||"[Your Name]","LAG Auto — Landsperg Automotive Group","Hyundai · Kia · Honda · Nissan · Mitsubishi · Ford · Jeep · Ram","📍 6444 67 Street, Red Deer, AB T4P 1A1","📞 1-403-348-8000  |  🌐 lagauto.ca"].join("\n");}
@@ -110,7 +110,7 @@ body{background:#f2f0eb;}
 .hdr-sub{font-size:9px;color:${CYAN};letter-spacing:2px;margin-top:2px;font-weight:600;}
 .hdr-r{font-size:10px;color:rgba(255,255,255,.3);display:flex;gap:4px;align-items:center;}
 .main{max-width:780px;margin:0 auto;padding:28px 18px 52px;}
-.card{background:#fff;border:1px solid #e7e3dc;border-radius:16px;padding:24px 26px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);}
+.card{background:#fff;border:1px solid #e7e3dc;border-radius:16px;padding:24px 26px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);overflow:hidden;}
 .cc{border-top:3px solid ${CYAN};}.cg{border-top:3px solid ${GOLD};}
 .cn{background:${NAVY};border:none;border-radius:16px;padding:24px 26px;margin-bottom:16px;}
 .badge{display:inline-flex;align-items:center;gap:8px;background:${NAVY};color:#fff;font-size:9.5px;font-weight:700;letter-spacing:1.5px;padding:3px 12px 3px 3px;border-radius:20px;margin-bottom:14px;}
@@ -193,21 +193,21 @@ label{display:block;font-size:11px;font-weight:600;color:#78716c;margin-bottom:6
 .cktok{color:#6b7280;}.cktno{color:${RED};font-weight:600;}
 .ehdr{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
 .etit{font-size:9.5px;font-weight:700;letter-spacing:2px;}
-.ebox{background:#faf9f7;border:1.5px solid #e7e3dc;border-radius:14px;padding:22px 24px;}
-.esubj{font-size:13px;font-weight:700;color:${NAVY};padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e7e3dc;}
-.ebody{font-size:13.5px;line-height:2;color:#374151;white-space:pre-wrap;font-family:inherit;}
+.ebox{background:#faf9f7;border:1.5px solid #e7e3dc;border-radius:14px;padding:22px 24px;overflow:hidden;max-width:100%;}
+.esubj{font-size:13px;font-weight:700;color:${NAVY};padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e7e3dc;overflow-wrap:break-word;word-break:break-word;}
+.ebody{font-size:13.5px;line-height:2;color:#374151;white-space:pre-wrap;font-family:inherit;overflow-wrap:break-word;word-break:break-word;max-width:100%;}
 .eerr{background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:16px 18px;color:${RED};font-size:13px;line-height:1.6;}
 .eerr-msg{font-weight:600;margin-bottom:6px;}
 .eerr-detail{font-size:11.5px;color:#b91c1c;opacity:.8;margin-bottom:12px;}
 .ibx{background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e7e3dc;}
 .ibxh{background:#f3f2f0;border-bottom:1px solid #e7e3dc;padding:14px 18px;}
 .ibxav{width:32px;height:32px;border-radius:50%;background:${NAVY};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0;}
-.ibxb{font-size:13.5px;line-height:1.9;color:#222;white-space:pre-wrap;font-family:Georgia,serif;padding:18px 20px;}
+.ibxb{font-size:13.5px;line-height:1.9;color:#222;white-space:pre-wrap;font-family:Georgia,serif;padding:18px 20px;overflow-wrap:break-word;word-break:break-word;max-width:100%;}
 .ibxf{background:#f3f2f0;border-top:1px solid #e7e3dc;padding:8px 18px;display:flex;gap:18px;}
 .sms{background:#f5f4f1;border:1.5px solid #e7e3dc;border-radius:14px;padding:16px;margin-top:12px;}
 .smsh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .smsl{font-size:9px;font-weight:700;letter-spacing:2px;color:#7c3aed;}
-.smsbub{background:#007AFF;border-radius:18px 18px 4px 18px;padding:12px 16px;max-width:85%;margin-left:auto;}
+.smsbub{background:#007AFF;border-radius:18px 18px 4px 18px;padding:12px 16px;max-width:85%;margin-left:auto;overflow-wrap:break-word;word-break:break-word;}
 .smschar{font-size:9.5px;color:#a8a29e;text-align:right;margin-top:8px;}
 .fu{border-top:1px solid #e7e3dc;margin-top:20px;padding-top:20px;}
 .fut{font-size:9.5px;font-weight:700;letter-spacing:2px;color:#a8a29e;margin-bottom:4px;}
@@ -465,7 +465,7 @@ export default function App() {
   const [toneIdx,   setToneIdx]   = useState(0);
   const [tradeIn,   setTradeIn]   = useState(false);
   const [useVids,   setUseVids]   = useState(true);
-  const [selVids,   setSelVids]   = useState([0,1,2]);
+  const [selVids,   setSelVids]   = useState([0,1]);
   const [emailOut,  setEmailOut]  = useState(null);
   const [seqOut,    setSeqOut]    = useState(null);
   const [seqBusy,   setSeqBusy]  = useState(false);
@@ -490,7 +490,7 @@ export default function App() {
     }
     if (!p.make || !p.model) { setLookupErr("Not found. Try: 2025 Kia Sorento Hybrid"); setLookupBusy(false); return; }
     setVehicle({...p, url:input.startsWith("http")?input:"https://www.lagauto.ca", videos:getVideos(p.make,p.model,p.year)});
-    setSelVids([0,1,2]); setLookupBusy(false);
+    setSelVids([0,1]); setLookupBusy(false);
   }, [urlInput]);
 
   const buildSystem = useCallback(() => {
