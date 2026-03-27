@@ -2,23 +2,32 @@
 
 import { useState, useCallback } from "react";
 
-// ── API — exact pattern from Anthropic artifact docs ─────────────────────────
+// ── API — with timeout + friendly error handling ──────────────────────────────
 async function callClaude(system, userContent, maxTokens) {
-  const response = await fetch("/api/claude", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: maxTokens || 1000,
-      system: system || undefined,
-      messages: [{ role: "user", content: userContent }],
-    }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data?.error?.message || "HTTP " + response.status);
-  return (data.content || []).map(b => b.text || "").join("").trim();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  try {
+    const response = await fetch("/api/claude", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: maxTokens || 1000,
+        system: system || undefined,
+        messages: [{ role: "user", content: userContent }],
+      }),
+      signal: controller.signal,
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error?.message || "HTTP " + response.status);
+    return (data.content || []).map(b => b.text || "").join("").trim();
+  } catch (e) {
+    if (e.name === "AbortError") throw new Error("Request timed out — please try again.");
+    if (!navigator.onLine) throw new Error("No internet connection. Check your network and retry.");
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // ── VEHICLE DATA ──────────────────────────────────────────────────────────────
@@ -115,27 +124,29 @@ label{display:block;font-size:11px;font-weight:600;color:#78716c;margin-bottom:6
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .s2{grid-column:1/-1;}
 .divider{border:none;border-top:1px solid #e7e3dc;margin:18px 0;}
-.bp{background:${NAVY};color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,44,95,.25);transition:all .15s;white-space:nowrap;}
+.bp{background:${NAVY};color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,44,95,.25);transition:all .15s;white-space:nowrap;min-height:44px;}
 .bp:hover:not(:disabled){background:#003a7a;transform:translateY(-1px);}
 .bp:disabled{background:#d6d3cd;color:#a3a09a;cursor:not-allowed;transform:none;}
-.bgen{width:100%;padding:15px;font-size:14.5px;letter-spacing:.4px;background:linear-gradient(135deg,${NAVY},#005080);border-radius:12px;margin-top:20px;border:none;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 18px rgba(0,44,95,.28);transition:all .15s;}
+.bgen{width:100%;padding:15px;font-size:14.5px;letter-spacing:.4px;background:linear-gradient(135deg,${NAVY},#005080);border-radius:12px;margin-top:20px;border:none;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 18px rgba(0,44,95,.28);transition:all .15s;min-height:52px;}
 .bgen:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,44,95,.38);}
 .bgen:disabled{background:#d6d3cd;color:#a3a09a;cursor:not-allowed;transform:none;box-shadow:none;}
-.bsm{background:#fff;border:1.5px solid #e7e3dc;border-radius:9px;padding:7px 15px;color:#78716c;font-size:11.5px;cursor:pointer;font-weight:600;font-family:inherit;transition:all .15s;}
+.bsm{background:#fff;border:1.5px solid #e7e3dc;border-radius:9px;padding:7px 15px;color:#78716c;font-size:11.5px;cursor:pointer;font-weight:600;font-family:inherit;transition:all .15s;min-height:36px;}
 .bsm:hover{border-color:#a8a29e;color:#292524;}.bsm.ok{border-color:${GREEN};color:${GREEN};background:#f0fdf4;}
-.bsend{background:#f5f4f1;border:1.5px solid #d6d3cd;border-radius:9px;padding:6px 14px;color:#57534e;font-size:11px;cursor:pointer;font-weight:600;font-family:inherit;transition:all .15s;}
+.bsend{background:#f5f4f1;border:1.5px solid #d6d3cd;border-radius:9px;padding:8px 14px;color:#57534e;font-size:11px;cursor:pointer;font-weight:600;font-family:inherit;transition:all .15s;min-height:40px;white-space:nowrap;}
 .bsend:hover:not(:disabled){background:#e7e3dc;color:#292524;border-color:#a8a29e;}
 .bsend:disabled{opacity:.5;cursor:not-allowed;}
 .bsend.ok{border-color:${GREEN};color:${GREEN};background:#f0fdf4;}
 .bsend.err{border-color:${RED};color:${RED};background:#fef2f2;}
+.bretry{background:#fff3cd;border:1.5px solid #e6ac00;border-radius:9px;padding:8px 16px;color:#b45309;font-size:12px;cursor:pointer;font-weight:700;font-family:inherit;transition:all .15s;min-height:40px;display:inline-flex;align-items:center;gap:6px;}
+.bretry:hover{background:#ffe9a0;border-color:#c8960c;}
 .snd-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed #e7e3dc;}
 .snd-disc{font-size:9.5px;color:#c4bdb4;}
-.bfu{border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .15s;}
+.bfu{border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .15s;min-height:44px;}
 .bfu:disabled{opacity:.45;cursor:not-allowed;}
 .bgr{background:${GREEN};color:#fff;}.bgr:hover:not(:disabled){background:#15803d;}
 .bam{background:#d97706;color:#fff;}.bam:hover:not(:disabled){background:#b45309;}
 .bpu{background:#7c3aed;color:#fff;}.bpu:hover:not(:disabled){background:#6d28d9;}
-.qp{background:none;border:1.5px dashed #d6d3cd;border-radius:8px;padding:5px 11px;color:#a8a29e;font-size:10.5px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.qp{background:none;border:1.5px dashed #d6d3cd;border-radius:8px;padding:7px 11px;color:#a8a29e;font-size:10.5px;cursor:pointer;font-family:inherit;transition:all .15s;min-height:36px;}
 .qp:hover{border-color:${NAVY};color:${NAVY};background:#f0f4ff;}
 .tog{display:flex;align-items:center;gap:8px;cursor:pointer;}
 .ttrack{width:38px;height:22px;border-radius:11px;position:relative;transition:background .2s;flex-shrink:0;}
@@ -184,7 +195,9 @@ label{display:block;font-size:11px;font-weight:600;color:#78716c;margin-bottom:6
 .ebox{background:#faf9f7;border:1.5px solid #e7e3dc;border-radius:14px;padding:22px 24px;}
 .esubj{font-size:13px;font-weight:700;color:${NAVY};padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e7e3dc;}
 .ebody{font-size:13.5px;line-height:2;color:#374151;white-space:pre-wrap;font-family:inherit;}
-.eerr{background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:16px;color:${RED};font-size:13px;line-height:1.6;}
+.eerr{background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:16px 18px;color:${RED};font-size:13px;line-height:1.6;}
+.eerr-msg{font-weight:600;margin-bottom:6px;}
+.eerr-detail{font-size:11.5px;color:#b91c1c;opacity:.8;margin-bottom:12px;}
 .ibx{background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e7e3dc;}
 .ibxh{background:#f3f2f0;border-bottom:1px solid #e7e3dc;padding:14px 18px;}
 .ibxav{width:32px;height:32px;border-radius:50%;background:${NAVY};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0;}
@@ -206,7 +219,72 @@ label{display:block;font-size:11px;font-weight:600;color:#78716c;margin-bottom:6
 .ftrn{font-family:'DM Serif Display',serif;font-size:15px;color:#fff;margin-bottom:4px;}
 .ftrb{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;}
 .ftra{font-size:10px;color:rgba(255,255,255,.18);}
-@media(max-width:520px){.g2{grid-template-columns:1fr;}.s2{grid-column:1;}.hdr-r{display:none;}}
+
+/* ── MOBILE POLISH (375px) ─────────────────────────────────────────── */
+@media(max-width:600px){
+  .g2{grid-template-columns:1fr;}
+  .s2{grid-column:1;}
+  .hdr-r{display:none;}
+  .hdr{padding:0 14px;}
+  .hdr-l{gap:10px;padding:11px 0;}
+  .logo{padding:4px 9px;}
+  .logo-lag{font-size:13px;}
+  .hdr-name{font-size:14px;}
+  .hdr-sub{font-size:7.5px;letter-spacing:1.5px;}
+  .main{padding:16px 12px 40px;}
+  .card{padding:16px 14px;border-radius:12px;}
+  .cn{padding:16px 14px;border-radius:12px;}
+  .vy{font-size:22px;}
+  .vm{font-size:13px;}
+  .rbox{min-width:100%;width:100%;margin-top:14px;}
+  /* Stack vehicle card vertically */
+  .cn > div{flex-direction:column!important;}
+  /* Full-width send inputs */
+  .snd-row{flex-direction:column;align-items:stretch;}
+  .snd-row input{width:100%!important;font-size:14px!important;padding:10px 12px!important;}
+  .bsend{width:100%;text-align:center;padding:12px 14px;font-size:13px;}
+  .bretry{width:100%;}
+  /* Bigger tap targets */
+  .bp{min-height:48px;font-size:13px;}
+  .bgen{min-height:54px;font-size:14px;}
+  .bfu{width:100%;min-height:48px;font-size:13px;}
+  .bsm{min-height:40px;padding:8px 14px;}
+  .qp{min-height:38px;font-size:11px;padding:8px 12px;}
+  /* Email card controls row - stack on small */
+  .ehdr{flex-direction:column;gap:8px;}
+  .ehdr > div:last-child{display:flex;flex-wrap:wrap;gap:8px;}
+  /* Email body font size */
+  .ebody{font-size:13px;line-height:1.9;}
+  .ibxb{font-size:12.5px;padding:14px 14px;}
+  .ebox{padding:14px 16px;}
+  /* SMS bubble */
+  .smsbub{max-width:92%;}
+  /* Tone picker - full width on very small */
+  .tp{flex-basis:100%;min-width:unset;}
+  /* Input search bar */
+  .inp{font-size:14px;}
+  /* Lookup row */
+  #lookup-row{flex-direction:column!important;}
+  #lookup-row .inp{width:100%;}
+  #lookup-row .bp{width:100%;}
+  /* Quick sample pills - smaller */
+  .qp{font-size:10px;padding:7px 10px;}
+  /* Follow-up sequence items */
+  .fu-item{flex-direction:column!important;gap:8px!important;}
+  /* Card header badges */
+  .badge{font-size:9px;}
+  /* Footer */
+  .ftr{padding:16px 14px;}
+  /* Checklist row */
+  .ck{gap:10px;}
+}
+@media(max-width:400px){
+  .hdr-sub{display:none;}
+  .vy{font-size:20px;}
+  .main{padding:12px 10px 36px;}
+  .card{padding:14px 12px;}
+  .cn{padding:14px 12px;}
+}
 `;
 
 // ── SUB COMPONENTS ────────────────────────────────────────────────────────────
@@ -216,6 +294,25 @@ function Spinner({ label }) {
       <div className="spin"/>
       <div style={{fontSize:13,color:"#78716c",fontWeight:500}}>{label||"Writing email…"}</div>
       <div style={{fontSize:11,color:"#a8a29e",marginTop:4}}>Usually 3–5 seconds</div>
+    </div>
+  );
+}
+
+function ErrorBox({ message, onRetry, retryLabel }) {
+  const friendlyMsg = message
+    .replace("Error: ", "")
+    .replace(/^HTTP 429.*/, "AI is busy right now — please wait a moment and try again.")
+    .replace(/^HTTP 5\d\d.*/, "Server hiccup — give it a second and retry.")
+    .replace(/^HTTP 4\d\d.*/, "Something went wrong with that request.");
+  return (
+    <div className="eerr">
+      <div className="eerr-msg">⚠ Something went wrong</div>
+      <div className="eerr-detail">{friendlyMsg}</div>
+      {onRetry && (
+        <button className="bretry" onClick={onRetry}>
+          🔄 {retryLabel || "Try Again"}
+        </button>
+      )}
     </div>
   );
 }
@@ -231,7 +328,7 @@ function CopyBtn({ getText }) {
 
 function SendEmailBtn({ text, defaultEmail }) {
   const [email, setEmail] = useState(defaultEmail || "");
-  const [status, setStatus] = useState(null); // null | "sending" | "ok" | "err"
+  const [status, setStatus] = useState(null);
   const [msg, setMsg] = useState("");
   const { subj, body } = parseEmail(text || "");
   const handleSend = async () => {
@@ -249,11 +346,12 @@ function SendEmailBtn({ text, defaultEmail }) {
     <div className="snd-row">
       <input
         className="inp"
-        style={{width:200,fontSize:11.5,padding:"5px 10px"}}
+        style={{width:200,fontSize:12,padding:"8px 10px"}}
         value={email}
         onChange={e=>setEmail(e.target.value)}
         placeholder="customer@email.com"
         disabled={status==="sending"}
+        type="email"
       />
       <button
         className={"bsend"+(status==="ok"?" ok":status==="err"?" err":"")}
@@ -269,7 +367,7 @@ function SendEmailBtn({ text, defaultEmail }) {
 
 function SendSmsBtn({ message, defaultPhone }) {
   const [phone, setPhone] = useState(defaultPhone || "");
-  const [status, setStatus] = useState(null); // null | "sending" | "ok" | "err"
+  const [status, setStatus] = useState(null);
   const [msg, setMsg] = useState("");
   const handleSend = async () => {
     if (!phone.trim()) return;
@@ -286,7 +384,7 @@ function SendSmsBtn({ message, defaultPhone }) {
     <div className="snd-row" style={{alignItems:"center"}}>
       <input
         className="inp"
-        style={{width:140,fontSize:11.5,padding:"5px 10px"}}
+        style={{width:160,fontSize:12,padding:"8px 10px"}}
         value={phone}
         onChange={e=>setPhone(e.target.value)}
         placeholder="e.g. 780-555-1234"
@@ -304,7 +402,7 @@ function SendSmsBtn({ message, defaultPhone }) {
   );
 }
 
-function EmailCard({ text, title, color }) {
+function EmailCard({ text, title, color, onRetry }) {
   const [prev, setPrev] = useState(false);
   const [copiedSubj, setCopiedSubj] = useState(false);
   if (!text) return null;
@@ -328,7 +426,7 @@ function EmailCard({ text, title, color }) {
         )}
       </div>
       {isErr ? (
-        <div className="eerr"><strong>Error:</strong> {text.replace("Error:","").trim()}</div>
+        <ErrorBox message={text} onRetry={onRetry} retryLabel="Regenerate Email"/>
       ) : prev ? (
         <div className="ibx">
           <div className="ibxh">
@@ -368,10 +466,8 @@ export default function App() {
   const [useVids,   setUseVids]   = useState(true);
   const [selVids,   setSelVids]   = useState([0,1]);
   const [emailOut,  setEmailOut]  = useState(null);
-  // Stage 3: 7-day follow-up sequence (3 touches)
-  const [seqOut,    setSeqOut]    = useState(null); // {touch1, touch2, touch3}
+  const [seqOut,    setSeqOut]    = useState(null);
   const [seqBusy,   setSeqBusy]  = useState(false);
-  // Stage 3: Standalone SMS generator
   const [smsOut,    setSmsOut]    = useState(null);
 
   const doLookup = useCallback(async (override) => {
@@ -385,7 +481,11 @@ export default function App() {
         const raw = await callClaude('Respond ONLY with valid JSON no markdown: {"year":"2026","make":"Hyundai","model":"Santa Fe Hybrid","trim":"Calligraphy","vin":null,"stock":null}. Use null for unknowns.', 'Vehicle: '+input, 300);
         const p2 = JSON.parse(raw.replace(/```json|```/g,"").trim());
         if (p2.make && p2.model) p = {...p, ...p2};
-      } catch(e) {}
+      } catch(e) {
+        setLookupErr(e.message.includes("timeout")?"Request timed out — check your connection and try again.":"Couldn't identify that vehicle. Try: 2025 Kia Sorento Hybrid");
+        setLookupBusy(false);
+        return;
+      }
     }
     if (!p.make || !p.model) { setLookupErr("Not found. Try: 2025 Kia Sorento Hybrid"); setLookupBusy(false); return; }
     setVehicle({...p, url:input.startsWith("http")?input:"https://www.lagauto.ca", videos:getVideos(p.make,p.model,p.year)});
@@ -422,7 +522,6 @@ export default function App() {
     } catch(e) { setEmailOut("Error: "+e.message); }
   }, [vehicle, custName, salesName, leadMsg, buildSystem]);
 
-  // Stage 3: Generate the full 3-touch follow-up sequence
   const doFollowUpSequence = useCallback(async () => {
     if (!vehicle || !custName) return;
     setSeqBusy(true);
@@ -434,15 +533,11 @@ export default function App() {
     const oemUrl7 = getOEMUrl(vehicle.make, vehicle.model);
     const linkBlock7 = vids7.length ? "\nInclude ONE of these real links naturally in the email body (paste URL verbatim, no placeholders):\n- Review: "+vids7[0].url+"\n- Specs: "+oemUrl7+"\n" : "";
     try {
-      // Run all 3 touches in parallel for speed
       const [t1, t2, t3] = await Promise.all([
-        // Touch 1: Same-day thank-you email
         callClaude(null,
           "Write a same-day thank-you email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" today.\nTone: warm, genuine, brief (4-5 sentences). No pressure. They just reached out.\nRules: No markdown, no bullets. Max 2 emoji. No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Use contractions naturally (you're, I'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+",\nEnd with:\n"+sig, 500),
-        // Touch 2: 48-hour SMS (hard max 140 chars)
         callClaude(null,
           "Write ONE SMS text message from "+(salesName||"[Your Name]")+" at LAG Auto to "+firstName+" about the "+vName+".\nContext: 48 hours have passed since they enquired. No reply yet. Just checking in.\nRules:\n- ABSOLUTE MAXIMUM: 140 characters. You have 140 characters TOTAL including spaces. Count carefully. If in doubt, make it shorter.\n- Count every character including spaces and punctuation\n- Casual, friendly tone\n- End with a simple CTA (call or reply)\n- NO emoji\n- NO quotation marks\n- Return ONLY the SMS text, nothing else — no labels, no quotes, no explanation", 100),
-        // Touch 3: 7-day value-add email
         callClaude(null,
           "Write a 7-day follow-up email from a car salesperson at LAG Auto in Red Deer, AB.\nFrom: "+(salesName||"[Your Name]")+"\nTo: "+custName+" who enquired about the "+vName+" 7 days ago.\nTone: warm re-engagement, add genuine value - mention one relevant feature, current financing offer, or seasonal tip for Alberta drivers.\nRules: No markdown, no bullets. Natural paragraphs. Max 2 emoji. Gentle urgency (not pushy). No em dashes - use regular dashes or commas. Avoid: delve, tapestry, vibrant, crucial, landscape, comprehensive, streamline. Mix short punchy sentences with longer ones. Use contractions naturally (you're, we'd, it's). Sound like a real Alberta car salesperson.\nLine 1: SUBJECT: [subject line]\nBlank line, then: Hi "+firstName+","+linkBlock7+"\nEnd with:\n"+sig, 600),
       ]);
@@ -465,6 +560,7 @@ export default function App() {
 
   const canGen = emailOut!=="loading" && !!vehicle && !!custName && !!leadMsg;
   const emailDone = emailOut && emailOut!=="loading" && !emailOut.startsWith("Error:");
+  const emailIsErr = emailOut && emailOut!=="loading" && emailOut.startsWith("Error:");
   const canSeq = !!vehicle && !!custName && !seqBusy;
 
   return (
@@ -488,7 +584,7 @@ export default function App() {
         <div className="card cc">
           <div className="badge"><div className="bn">1</div>VEHICLE LOOKUP</div>
           <p className="hint">Paste a lagauto.ca URL — or type like <span style={{color:CYAN,background:"#f0faff",border:"1px solid #bde8f5",padding:"1px 7px",borderRadius:4,fontSize:11}}>2026 Jeep Compass Sport</span></p>
-          <div style={{display:"flex",gap:10}}>
+          <div id="lookup-row" style={{display:"flex",gap:10}}>
             <input className="inp" style={{flex:1}} value={urlInput} onChange={e=>setUrlInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLookup()} placeholder="https://www.lagauto.ca/... or type a vehicle name"/>
             <button className="bp" onClick={()=>doLookup()} disabled={lookupBusy}>{lookupBusy?"Detecting…":"Look Up →"}</button>
           </div>
@@ -532,7 +628,7 @@ export default function App() {
         {/* STEP 2 */}
         {vehicle && (
           <div className="card cc">
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:10}}>
               <div className="badge"><div className="bn">2</div>RESOURCE LINKS IN EMAIL?</div>
               <div className="tog" onClick={()=>setUseVids(v=>!v)}>
                 <div className={"ttrack "+(useVids?"ton":"toff")}><div className="tthumb" style={{left:useVids?19:3}}/></div>
@@ -606,7 +702,12 @@ export default function App() {
             </div>
 
             <button className="bgen" onClick={doGenerate} disabled={!canGen}>
-              {emailOut==="loading"?"✨  Writing your email…":"⚡  Generate AI Email Reply"}
+              {emailOut==="loading"
+                ? <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+                    <span style={{width:16,height:16,border:"2.5px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",display:"inline-block",animation:"spin .7s linear infinite"}}/>
+                    Generating…
+                  </span>
+                : "⚡  Generate AI Email Reply"}
             </button>
           </div>
         )}
@@ -617,7 +718,12 @@ export default function App() {
             {emailOut==="loading"
               ? <Spinner label="Writing your personalized email…"/>
               : <>
-                  <EmailCard text={emailOut} title={"📧 INITIAL REPLY · "+[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")+(vehicle?.stock?" · Stock #"+vehicle.stock:"")} color={CYAN}/>
+                  <EmailCard
+                    text={emailOut}
+                    title={"📧 INITIAL REPLY · "+[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")+(vehicle?.stock?" · Stock #"+vehicle.stock:"")}
+                    color={CYAN}
+                    onRetry={emailIsErr ? doGenerate : null}
+                  />
                   {emailDone && <SendEmailBtn text={emailOut} defaultEmail={custEmail}/>}
                 </>
             }
@@ -636,12 +742,16 @@ export default function App() {
               onClick={doSMS}
               disabled={smsOut==="loading"||!custName||!vehicle}
             >
-              {smsOut==="loading"?"✨ Writing SMS…":"📱 Generate SMS (140 chars)"}
+              {smsOut==="loading"
+                ? <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                    <span style={{width:14,height:14,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",display:"inline-block",animation:"spin .7s linear infinite"}}/>
+                    Generating SMS…
+                  </span>
+                : "📱 Generate SMS (140 chars)"}
             </button>
-            {smsOut==="loading" && <div style={{color:"#a8a29e",fontSize:13,display:"flex",alignItems:"center",gap:8}}><div className="spin" style={{width:14,height:14,margin:0}}/> Writing…</div>}
             {smsOut && smsOut!=="loading" && (
               smsOut.startsWith("Error:") ? (
-                <div className="eerr"><strong>Error:</strong> {smsOut.replace("Error:","").trim()}</div>
+                <ErrorBox message={smsOut} onRetry={doSMS} retryLabel="Regenerate SMS"/>
               ) : (
                 <div className="sms">
                   <div className="smsh">
@@ -675,13 +785,13 @@ export default function App() {
                 {n:"2",label:"📱 48-Hour Check-In (SMS)",type:"SMS",color:PURPLE,desc:"Short text if no reply after 2 days"},
                 {n:"3",label:"📧 7-Day Re-Engagement (Email)",type:"Email",color:GOLD,desc:"Warm re-engagement with relevant info or offer"},
               ].map(t=>(
-                <div key={t.n} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",borderRadius:10,border:"1.5px solid #e7e3dc",background:"#faf9f7"}}>
+                <div key={t.n} className="fu-item" style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",borderRadius:10,border:"1.5px solid #e7e3dc",background:"#faf9f7"}}>
                   <div style={{width:28,height:28,borderRadius:50,background:t.color,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:12,flexShrink:0}}>{t.n}</div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:12.5,fontWeight:700,color:"#1c1917"}}>{t.label}</div>
                     <div style={{fontSize:10.5,color:"#a8a29e",marginTop:2}}>{t.desc}</div>
                   </div>
-                  <div style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,background:t.color+"20",color:t.color,border:"1px solid "+t.color+"40"}}>{t.type}</div>
+                  <div style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,background:t.color+"20",color:t.color,border:"1px solid "+t.color+"40",flexShrink:0}}>{t.type}</div>
                 </div>
               ))}
             </div>
@@ -693,7 +803,12 @@ export default function App() {
               onClick={doFollowUpSequence}
               disabled={!canSeq||!custName}
             >
-              {seqBusy?"✨  Generating all 3 touches…":"⚡  Generate Follow-Up Sequence"}
+              {seqBusy
+                ? <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+                    <span style={{width:16,height:16,border:"2.5px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",display:"inline-block",animation:"spin .7s linear infinite"}}/>
+                    Generating 3 touches…
+                  </span>
+                : "⚡  Generate Follow-Up Sequence"}
             </button>
 
             {seqBusy && <Spinner label="Generating 3-touch sequence in parallel…"/>}
@@ -706,7 +821,7 @@ export default function App() {
                     <div style={{width:24,height:24,borderRadius:50,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>1</div>
                     <span style={{fontSize:12,fontWeight:700,color:GREEN}}>📧 Same-Day Thank You (Email)</span>
                   </div>
-                  <EmailCard text={seqOut.touch1} title="" color={GREEN}/>
+                  <EmailCard text={seqOut.touch1} title="" color={GREEN} onRetry={seqOut.touch1.startsWith("Error:") ? doFollowUpSequence : null}/>
                   {!seqOut.touch1.startsWith("Error:") && <SendEmailBtn text={seqOut.touch1} defaultEmail={custEmail}/>}
                 </div>
 
@@ -717,7 +832,7 @@ export default function App() {
                     <span style={{fontSize:12,fontWeight:700,color:PURPLE}}>📱 48-Hour Check-In (SMS)</span>
                   </div>
                   {seqOut.touch2.startsWith("Error:") ? (
-                    <div className="eerr"><strong>Error:</strong> {seqOut.touch2.replace("Error:","").trim()}</div>
+                    <ErrorBox message={seqOut.touch2} onRetry={doFollowUpSequence} retryLabel="Regenerate Sequence"/>
                   ) : (
                     <div className="sms">
                       <div className="smsh">
@@ -743,7 +858,7 @@ export default function App() {
                     <div style={{width:24,height:24,borderRadius:50,background:GOLD,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>3</div>
                     <span style={{fontSize:12,fontWeight:700,color:GOLD}}>📧 7-Day Re-Engagement (Email)</span>
                   </div>
-                  <EmailCard text={seqOut.touch3} title="" color={GOLD}/>
+                  <EmailCard text={seqOut.touch3} title="" color={GOLD} onRetry={seqOut.touch3.startsWith("Error:") ? doFollowUpSequence : null}/>
                   {!seqOut.touch3.startsWith("Error:") && <SendEmailBtn text={seqOut.touch3} defaultEmail={custEmail}/>}
                 </div>
               </div>
