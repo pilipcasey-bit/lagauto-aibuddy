@@ -35,7 +35,7 @@ const OEM = {
   Hyundai:{title:"Hyundai Canada",base:"https://www.hyundaicanada.com/en/showroom"},
   Kia:{title:"Kia Canada",base:"https://www.kia.ca/en/vehicles"},
   Honda:{title:"Honda Canada",base:"https://www.honda.ca/en"},
-  Nissan:{title:"Nissan Canada",base:"https://www.nissan.ca/vehicles/all-vehicles.html"},
+  Nissan:{title:"Nissan Canada",base:"https://www.nissan.ca"},
   Mitsubishi:{title:"Mitsubishi Canada",base:"https://www.mitsubishi-motors.ca/en"},
   Ford:{title:"Ford Canada",base:"https://www.ford.ca"},
   Jeep:{title:"Jeep Canada",base:"https://www.jeep.com/en_ca"},
@@ -58,8 +58,9 @@ const MAKE_MODELS = {
 const TRIMS = ["calligraphy","ultimate","luxury","preferred","essential","limited","platinum","sel","sport","ex-l","ex","lx","touring","titanium","king ranch","lariat","xlt","xl","sport touring","black edition","night","highline","sxt","gt"];
 const SLUGS = {"Santa Fe Hybrid":"santa-fe","Santa Fe":"santa-fe","Tucson Hybrid":"tucson","Tucson":"tucson","Elantra Hybrid":"elantra","Elantra":"elantra","Palisade":"palisade","Venue":"venue","Kona":"kona","Ioniq 5":"ioniq5","Ioniq 6":"ioniq6","Sorento Hybrid":"sorento","Sorento":"sorento","Sportage Hybrid":"sportage","Sportage":"sportage","Telluride":"telluride","Carnival":"carnival","Forte":"forte","K5":"k5","Niro":"niro","CR-V Hybrid":"cr-v","CR-V":"cr-v","Civic Hybrid":"civic","Civic":"civic","Accord Hybrid":"accord","Accord":"accord","Pilot":"pilot","Odyssey":"odyssey","HR-V":"hr-v","Ridgeline":"ridgeline","Rogue":"rogue","Pathfinder":"pathfinder","Qashqai":"qashqai","Murano":"murano","Frontier":"frontier","Kicks":"kicks","Outlander PHEV":"outlander-phev","Outlander":"outlander","Eclipse Cross":"eclipse-cross","RVR":"rvr","F-150":"trucks/f150","Escape":"suvs/escape","Explorer":"suvs/explorer","Bronco":"suvs/bronco","Bronco Sport":"suvs/bronco-sport","Ranger":"trucks/ranger","Expedition":"suvs/expedition","Edge":"suvs/edge","Mustang Mach-E":"electric-vehicles/mustang-mach-e","Compass":"compass","Wrangler":"wrangler","Grand Cherokee":"grand-cherokee","Gladiator":"gladiator","Pacifica":"pacifica","Durango":"durango","1500":"1500"};
 
-function getOEMUrl(make,model){const o=OEM[make];if(!o)return"https://www.lagauto.ca";const slug=SLUGS[model]||(model||"").toLowerCase().replace(/ /g,"-");if(make==="Nissan")return o.base;if(make==="Mitsubishi")return o.base+"/vehicles/"+slug;if(make==="Ford")return"https://www.ford.ca/"+slug+"/";if(["Jeep","Chrysler","Dodge","Ram"].includes(make))return o.base+"/vehicles/"+slug+".html";return o.base+"/"+slug;}
-function getVideos(make,model,year){const base=[year,make,model].filter(Boolean).join(" ");const isH=/hybrid|phev|ev|ioniq|mach-e|niro/i.test(model||"");const ytQ=encodeURIComponent(base+(isH?" hybrid review walkaround":" review walkaround"));const atMake=encodeURIComponent(make||"");const atModel=encodeURIComponent(model||"");const atYear=year||"2026";const atUrl="https://www.autotrader.ca/cars/?mdl="+atModel+"&mk="+atMake+"&yRng="+atYear+"%2C"+atYear;return[{title:base+" — AutoTrader.ca Listings",channel:"AutoTrader.ca",url:atUrl,reason:"Canada's #1 auto site"},{title:base+(isH?" Hybrid Walkaround":" Full Walkaround"),channel:"YouTube",url:"https://www.youtube.com/results?search_query="+ytQ+"&sp=CAMSAhAB",reason:"Most-watched review"}];}
+function getOEMUrl(make,model){const o=OEM[make];if(!o)return"https://www.lagauto.ca";const slug=SLUGS[model]||(model||"").toLowerCase().replace(/ /g,"-");if(make==="Nissan"){const nissanSlugs={"Rogue":"crossovers-suvs/rogue","Pathfinder":"crossovers-suvs/pathfinder","Qashqai":"crossovers-suvs/qashqai","Murano":"crossovers-suvs/murano","Armada":"crossovers-suvs/armada","Kicks":"crossovers-suvs/kicks","Frontier":"trucks/frontier","Sentra":"cars/sentra","Altima":"cars/altima"};const ns=nissanSlugs[model];return ns?"https://www.nissan.ca/vehicles/"+ns+".html":"https://www.nissan.ca";}if(make==="Mitsubishi")return o.base+"/vehicles/"+slug;if(make==="Ford")return"https://www.ford.ca/"+slug+"/";if(["Jeep","Chrysler","Dodge","Ram"].includes(make))return o.base+"/vehicles/"+slug+".html";return o.base+"/"+slug;}
+function getLagAutoInventoryUrl(make,model){const q=[make&&"make="+encodeURIComponent(make),model&&"model="+encodeURIComponent(model)].filter(Boolean).join("&");return"https://www.lagauto.ca/en/new-inventory"+(q?"?"+q:"");}
+function getVideos(make,model,year){const base=[year,make,model].filter(Boolean).join(" ");const isH=/hybrid|phev|ev|ioniq|mach-e|niro/i.test(model||"");const ytQ=encodeURIComponent(base+(isH?" hybrid review walkaround":" review walkaround"));const atMake=encodeURIComponent(make||"");const atModel=encodeURIComponent(model||"");const atYear=year||"2026";const atUrl="https://www.autotrader.ca/cars/?mdl="+atModel+"&mk="+atMake+"&yRng="+atYear+"%2C"+atYear;const lagUrl=getLagAutoInventoryUrl(make,model);return[{title:base+" — AutoTrader.ca Listings",channel:"AutoTrader.ca",url:atUrl,reason:"Canada's #1 auto site — current listings"},{title:base+(isH?" Hybrid Review & Walkaround":" Review & Walkaround"),channel:"YouTube Search →",url:"https://www.youtube.com/results?search_query="+ytQ+"&sp=CAMSAhAB",reason:"YouTube search — recent walkarounds & reviews"},{title:"LAG Auto — "+[make,model].filter(Boolean).join(" ")+" Inventory",channel:"LAG Auto Inventory →",url:lagUrl,reason:"Current in-stock units at LAG Auto"}];}
 function parseVehicle(input){const s=input.toLowerCase().replace(/-/g," ");const yearM=s.match(/20(1[6-9]|2[0-9])/);const year=yearM?yearM[0]:null;const makeKey=Object.keys(MAKE_MODELS).find(m=>s.includes(m))||null;const make=makeKey?makeKey.charAt(0).toUpperCase()+makeKey.slice(1):null;let model=null;if(makeKey){const f=MAKE_MODELS[makeKey].find(m=>s.includes(m));if(f)model=f.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}const trim=TRIMS.find(t=>s.includes(t));const trimProper=trim?trim.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" "):null;const vinM=input.match(/[A-HJ-NPR-Z0-9]{17}/i);const vin=vinM?vinM[0].toUpperCase():null;return{year,make,model,trim:trimProper,vin,stock:vin?vin.slice(-6):null};}
 function parseEmail(raw){if(!raw)return{subj:"",body:""};const lines=raw.split("\n");const si=lines.findIndex(l=>l.startsWith("SUBJECT:"));const subj=si>=0?lines[si].replace("SUBJECT:","").trim():"";const bi=lines.findIndex(l=>/^Hi /i.test(l.trim()));const body=lines.slice(bi>=0?bi:(si>=0?si+2:0)).join("\n").trim();return{subj,body};}
 function lagSig(n){return[n||"[Your Name]","LAG Auto — Landsperg Automotive Group","Hyundai · Kia · Honda · Nissan · Mitsubishi · Ford · Jeep · Ram","📍 6444 67 Street, Red Deer, AB T4P 1A1","📞 1-403-348-8000  |  🌐 lagauto.ca"].join("\n");}
@@ -464,7 +465,7 @@ export default function App() {
   const [toneIdx,   setToneIdx]   = useState(0);
   const [tradeIn,   setTradeIn]   = useState(false);
   const [useVids,   setUseVids]   = useState(true);
-  const [selVids,   setSelVids]   = useState([0,1]);
+  const [selVids,   setSelVids]   = useState([0,1,2]);
   const [emailOut,  setEmailOut]  = useState(null);
   const [seqOut,    setSeqOut]    = useState(null);
   const [seqBusy,   setSeqBusy]  = useState(false);
@@ -489,7 +490,7 @@ export default function App() {
     }
     if (!p.make || !p.model) { setLookupErr("Not found. Try: 2025 Kia Sorento Hybrid"); setLookupBusy(false); return; }
     setVehicle({...p, url:input.startsWith("http")?input:"https://www.lagauto.ca", videos:getVideos(p.make,p.model,p.year)});
-    setSelVids([0,1]); setLookupBusy(false);
+    setSelVids([0,1,2]); setLookupBusy(false);
   }, [urlInput]);
 
   const buildSystem = useCallback(() => {
