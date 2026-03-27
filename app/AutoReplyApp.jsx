@@ -3,9 +3,9 @@
 import { useState, useCallback } from "react";
 
 // ── API — with timeout + friendly error handling ──────────────────────────────
-async function callClaude(system, userContent, maxTokens) {
+async function callClaude(system, userContent, maxTokens, isRetry = false) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout
   try {
     const response = await fetch("/api/claude", {
       method: "POST",
@@ -19,7 +19,13 @@ async function callClaude(system, userContent, maxTokens) {
       signal: controller.signal,
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data?.error?.message || "HTTP " + response.status);
+    if (!response.ok) {
+      if ((response.status === 529 || response.status === 503) && !isRetry) {
+        await new Promise(r => setTimeout(r, 2000));
+        return callClaude(system, userContent, maxTokens, true); // retry flag
+      }
+      throw new Error(data?.error?.message || "HTTP " + response.status);
+    }
     return (data.content || []).map(b => b.text || "").join("").trim();
   } catch (e) {
     if (e.name === "AbortError") throw new Error("Request timed out — please try again.");
@@ -214,6 +220,8 @@ label{display:block;font-size:11px;font-weight:600;color:#78716c;margin-bottom:6
 .fud{font-size:11.5px;color:#a8a29e;margin-bottom:14px;}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;font-size:13px;font-weight:600;padding:10px 22px;border-radius:20px;box-shadow:0 4px 16px rgba(0,0,0,.18);animation:slideUp .25s ease;z-index:9999;pointer-events:none;white-space:nowrap;}
 .spin{width:32px;height:32px;border:3px solid rgba(0,170,210,.15);border-top-color:${CYAN};border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
 .anim{animation:fi .3s ease;}
 .ftr{background:${NAVY};padding:20px 28px;text-align:center;margin-top:8px;}
@@ -442,7 +450,7 @@ function EmailCard({ text, title, color, onRetry }) {
         </div>
       ) : (
         <div className="ebox">
-          {subj&&<div className="esubj">Subject: {subj}</div>}
+          {subj&&<div className="esubj">Subject: {subj}{subj.length > 60 && <div style={{fontSize:10, color:'#b45309', marginTop:4}}>⚠️ {subj.length}/60 chars — subject may get cut off in Gmail</div>}</div>}
           <div className="ebody">{body}</div>
         </div>
       )}
@@ -452,6 +460,7 @@ function EmailCard({ text, title, color, onRetry }) {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
+  const [toast,     setToast]     = useState("");
   const [urlInput,  setUrlInput]  = useState("");
   const [vehicle,   setVehicle]   = useState(null);
   const [lookupErr, setLookupErr] = useState("");
@@ -567,6 +576,7 @@ export default function App() {
   return (
     <div className="app">
       <style>{CSS}</style>
+      {toast && <div className="toast">{toast}</div>}
 
       <div className="hdr">
         <div className="hdr-l">
@@ -757,7 +767,7 @@ export default function App() {
                 <div className="sms">
                   <div className="smsh">
                     <span className="smsl">📱 TEXT MESSAGE · {[vehicle?.year,vehicle?.make,vehicle?.model].filter(Boolean).join(" ")}</span>
-                    <button className="bsm" onClick={()=>copyText(smsOut)} style={{fontSize:11}}>Copy SMS</button>
+                    <button className="bsm" onClick={()=>{copyText(smsOut);setToast("Copied!");setTimeout(()=>setToast(""),1500);}} style={{fontSize:11}}>Copy SMS</button>
                   </div>
                   <div style={{display:"flex",justifyContent:"flex-end"}}>
                     <div className="smsbub">
@@ -838,7 +848,7 @@ export default function App() {
                     <div className="sms">
                       <div className="smsh">
                         <span className="smsl">📱 48-HOUR CHECK-IN SMS</span>
-                        <button className="bsm" onClick={()=>copyText(seqOut.touch2)} style={{fontSize:11}}>Copy SMS</button>
+                        <button className="bsm" onClick={()=>{copyText(seqOut.touch2);setToast("Copied!");setTimeout(()=>setToast(""),1500);}} style={{fontSize:11}}>Copy SMS</button>
                       </div>
                       <div style={{display:"flex",justifyContent:"flex-end"}}>
                         <div className="smsbub">

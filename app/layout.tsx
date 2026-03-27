@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "LAG Auto — AutoReply AI",
-  description: "Sales email generator for LAG Auto dealership",
+  title: "LAG Auto AI Buddy",
+  description: "AI-powered sales reply generator for LAG Auto dealership.",
 };
 
 export default function RootLayout({
